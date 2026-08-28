@@ -99,13 +99,16 @@ jobs:
       - name: Aplicar políticas de RLS
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f drizzle/rls.sql
 
+      - name: Testes de isolamento (RLS, constraint, withTenant)
+        run: npm test
+
       - name: Nenhuma tabela de negócio sem RLS
         run: |
           FALTANDO=$(psql "$DATABASE_URL" -tAc "
             select string_agg(tablename, ', ')
             from pg_tables
             where schemaname = 'public'
-              and tablename not in ('__drizzle_migrations', 'webhooks_recebidos')
+              and tablename not in ('__drizzle_migrations', 'webhook_recebido')
               and not rowsecurity")
           if [ -n "$FALTANDO" ]; then
             echo "::error::Tabela sem RLS: $FALTANDO"
@@ -173,3 +176,31 @@ jobs:
       - run: npm run build
       - name: Conferir os limites
         run: node scripts/check-bundle-budget.mjs
+
+  # ── 6. As imagens que vão para o VPS precisam construir em todo PR ────────
+  imagem:
+    name: Imagens do web e do worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [qualidade]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Construir a imagem do web
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infra/Dockerfile.web
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+      - name: Construir a imagem do worker
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infra/Dockerfile.worker
+          push: false
+          cache-from: type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker

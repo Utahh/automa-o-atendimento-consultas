@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 40" width="132" height="80" role="img" aria-label="Kairo — secretária de IA">
+  <text x="0" y="24" font-family="Inter, system-ui, sans-serif" font-size="26" font-weight="600" letter-spacing="-0.52" fill="#146099">kair</text>
+  <circle cx="50.7" cy="18" r="4.9" fill="none" stroke="#146099" stroke-width="2.6"></circle>
+  <path d="M50.7 18V11.8A6.2 6.2 0 0 1 56.9 18H50.7Z" fill="#146099"></path>
+  <text x="0.5" y="34" font-family="Inter, system-ui, sans-serif" font-size="5" font-weight="500" letter-spacing="0.6" fill="#636A71">SECRETÁRIA DE IA</text>
+</svg>

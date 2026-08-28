@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { textos } from '@/shared/i18n';
-import { Carregando } from '@/shared/ui';
-import { AgendaDoDia } from '@/modules/agenda';
+import { Carregando, Page } from '@/shared/ui';
+import { AcoesDaAgenda, AgendaDia } from '@/modules/agenda';
 import type { AgendamentoDaTela } from '@/modules/agenda';
 
 export const metadata = { title: textos.nav.hoje };
@@ -9,24 +9,22 @@ export const metadata = { title: textos.nav.hoje };
 /**
  * Streaming por regiao da tela: o cabecalho aparece imediatamente e a lista
  * chega depois. Nunca uma roda girando no meio de nada.
+ *
+ * "Hoje" nao e um painel; e o proximo atendimento.
  */
 export default function Hoje() {
   return (
-    <div className="flex flex-col gap-4">
-      <header className="camada-grudado bg-fundo/90 sticky top-0 py-2 backdrop-blur">
-        <h1 className="text-[22px] font-semibold tracking-tight">{textos.nav.hoje}</h1>
-      </header>
-
+    <Page titulo={textos.nav.hoje} acao={<AcoesDaAgenda />}>
       <Suspense fallback={<Carregando linhas={4} />}>
         <ListaDeHoje />
       </Suspense>
-    </div>
+    </Page>
   );
 }
 
 async function ListaDeHoje() {
   const agendamentos = await carregarAgendaDeHoje();
-  return <AgendaDoDia agendamentos={agendamentos} />;
+  return <AgendaDia agendamentos={agendamentos} />;
 }
 
 /**

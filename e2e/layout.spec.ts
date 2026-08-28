@@ -11,7 +11,18 @@ import { alvosPequenos, colisoesDeTexto, estouroHorizontal } from './utils/layou
 
 const VIEWPORTS = [320, 360, 768, 1024, 1440] as const;
 
-const ROTAS = ['/hoje', '/agenda', '/clientes', '/conversas', '/financeiro', '/conta', '/p/demo'];
+const ROTAS = [
+  '/hoje',
+  '/agenda',
+  '/agenda/semana',
+  '/clientes',
+  '/conversas',
+  '/servicos',
+  '/financeiro',
+  '/automacoes',
+  '/conta',
+  '/p/demo',
+];
 
 for (const largura of VIEWPORTS) {
   for (const rota of ROTAS) {

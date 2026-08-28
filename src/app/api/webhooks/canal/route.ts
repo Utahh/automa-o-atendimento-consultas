@@ -41,7 +41,7 @@ export async function POST(requisicao: Request) {
       : (requisicao.headers.get('x-request-id') ?? randomUUID());
 
   await db
-    .insert(schema.webhooksRecebidos)
+    .insert(schema.webhookRecebido)
     .values({ canal: 'oficial', externoId, corpo })
     .onConflictDoNothing();
 

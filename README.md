@@ -2,9 +2,14 @@
 
 Agenda, atendimento e cobrança para quem vive de consulta.
 
+**A automação é o produto; a agenda é o banco de dados que ela opera.**
+
 Uma linguagem, três camadas, um contrato entre as trilhas. Tudo o que este
 repositório promete é **verificável por lint ou por teste**, não por revisão de
 gosto.
+
+> ⚠️ `Kairo` é nome de trabalho, pendente de busca no INPI. Não usar em
+> material de venda — ver [docs/BRAND.md](docs/BRAND.md).
 
 [![CI](https://github.com/Utahh/automa-o-atendimento-consultas/actions/workflows/ci.yml/badge.svg)](https://github.com/Utahh/automa-o-atendimento-consultas/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Utahh/automa-o-atendimento-consultas/actions/workflows/codeql.yml/badge.svg)](https://github.com/Utahh/automa-o-atendimento-consultas/actions/workflows/codeql.yml)
@@ -22,6 +27,7 @@ npm install
 docker compose -f infra/docker-compose.dev.yml up -d
 npm run db:generate && npm run db:migrate
 psql "$DATABASE_URL" -f drizzle/rls.sql
+npm run db:seed
 npm run dev
 ```
 
@@ -94,9 +100,11 @@ A dependência é sempre para baixo, e isso **não é combinado verbal**:
 
 ## Documentação
 
-- [Arquitetura](docs/ARCHITECTURE.md) — as camadas, o padrão de caso de uso, as portas de escrita
-- [Interface](docs/UI_RULES.md) — camadas de z-index, as dez regras contra texto sobreposto, menu adaptativo
-- [Deploy](docs/CLOUD_DEPLOYMENT.md) — branches, ambientes, segredos e a ordem das coisas
+- [Produto](docs/PRODUCT.md) — os cinco setores, as personas, as 13 capacidades, a ordem de construção
+- [Arquitetura](docs/ARCHITECTURE.md) — as camadas, o padrão de caso de uso, as quatro portas de escrita
+- [Interface](docs/UI_RULES.md) — camadas de z-index, as dez regras contra texto sobreposto, menu suspenso
+- [Marca](docs/BRAND.md) — o símbolo, a paleta, a voz, e o que ainda bloqueia o lançamento
+- [Deploy e custo](docs/CLOUD_DEPLOYMENT.md) — a pilha gratuita, os seis degraus e os gatilhos
 - [Contribuir](CONTRIBUTING.md) — a definição de pronto
 
 ## Licença

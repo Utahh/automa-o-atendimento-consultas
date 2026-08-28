@@ -4,26 +4,27 @@ import { STATUS } from './domain/transicoes';
 /**
  * O CONTRATO com o front.
  *
- * O schema é a fonte; o tipo TypeScript é derivado dele. Nada é escrito duas
- * vezes — e se o back mudar o schema, o front quebra na compilação, não em
- * produção.
+ * O schema e a fonte; o tipo TypeScript e DERIVADO dele. Nada e escrito duas
+ * vezes — e se o back mudar o schema, o front quebra na compilacao, nao em
+ * producao.
  */
 
 export const criarAgendamentoSchema = z.object({
   clienteId: z.string().uuid(),
   servicoId: z.string().uuid(),
+  recursoId: z.string().uuid().nullable().default(null),
   inicio: z.coerce.date(),
   observacao: z.string().max(500).optional(),
 });
 export type CriarAgendamento = z.infer<typeof criarAgendamentoSchema>;
 
-export const remarcarAgendamentoSchema = z.object({
+export const remarcarSchema = z.object({
   agendamentoId: z.string().uuid(),
   novoInicio: z.coerce.date(),
-  /** Bloqueio otimista: a UI devolve a versão que leu. */
+  /** Bloqueio otimista: a UI devolve a versao que leu. */
   versao: z.number().int().positive(),
 });
-export type RemarcarAgendamento = z.infer<typeof remarcarAgendamentoSchema>;
+export type Remarcar = z.infer<typeof remarcarSchema>;
 
 export const mudarStatusSchema = z.object({
   agendamentoId: z.string().uuid(),
@@ -47,26 +48,13 @@ export const agendamentoDaTelaSchema = z.object({
   versao: z.number().int().positive(),
   clienteNome: z.string(),
   servicoNome: z.string(),
-  /** Já formatado no servidor: o cliente não carrega biblioteca de data. */
+  /** Ja formatado no servidor: o cliente nao carrega biblioteca de data. */
   horaFormatada: z.string(),
 });
 export type AgendamentoDaTela = z.infer<typeof agendamentoDaTelaSchema>;
 
 export const slotSchema = z.object({
-  inicio: z.coerce.date(),
-  fim: z.coerce.date(),
+  inicioISO: z.string().datetime(),
   horaFormatada: z.string(),
 });
 export type Slot = z.infer<typeof slotSchema>;
-
-/** Códigos de erro que a agenda sabe devolver. Cada um tem texto em i18n. */
-export const CODIGOS_DE_ERRO = [
-  'HORARIO_OCUPADO',
-  'FORA_DA_JORNADA',
-  'ANTECEDENCIA_INSUFICIENTE',
-  'AGENDAMENTO_NAO_ENCONTRADO',
-  'CONFLITO_DE_VERSAO',
-  'TRANSICAO_INVALIDA',
-  'DADOS_INVALIDOS',
-] as const;
-export type CodigoDeErroDaAgenda = (typeof CODIGOS_DE_ERRO)[number];

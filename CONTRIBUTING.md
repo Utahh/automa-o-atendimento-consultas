@@ -37,9 +37,12 @@ Um PR só fecha quando tudo isto é verdade.
 
 **Ambas as trilhas**
 
-1. Os cinco setores escritos na história — inclusive o 5
+1. Os **cinco setores** escritos na história — Persona · Ação · Resultado ·
+   Tom · **Suporte**. Sem o 5, não entra: é o comportamento do produto no pior
+   dia, e é onde os concorrentes perdem cliente
 2. Teste do caminho feliz **e** do caminho de erro
-3. Erro com **ação sugerida**, nos três textos de `i18n`
+3. Erro com **ação sugerida**, nos três textos de `i18n` (profissional,
+   cliente final, o que fazer)
 
 **Back-end**
 
@@ -54,7 +57,16 @@ Um PR só fecha quando tudo isto é verdade.
 9. Quatro estados da tela: vazio, carregando, erro, conteúdo
 10. `layout.spec.ts` verde nos cinco viewports
 11. Nenhum z-index fora da escala de `z-index.css`
-12. Nenhuma string literal em componente
+12. Nenhuma string literal em componente — e o nome da marca só em `brand.ts`
+13. Testado em viewport de 360 px, num aparelho de entrada
 
 Os itens 4, 10, 11 e 12 são verificados pelo CI. Os outros são revisão — e
 "não foi possível concluir" continua sendo motivo de recusa.
+
+## O que não se faz
+
+- Ligar um canal de WhatsApp não oficial "só por enquanto": o banimento do
+  número da profissional não tem recurso.
+- Subir um degrau de custo antes do gatilho numérico escrito.
+- Cor comunicando estado sozinha, sem rótulo ao lado.
+- Diálogo de "tem certeza?" no lugar de desfazer.

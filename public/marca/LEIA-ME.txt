@@ -1,0 +1,27 @@
+KAIRO — arquivos de marca
+=========================
+⚠️ "Kairo" é nome de trabalho: pendente de busca no INPI (classes 42 e 35).
+Não usar em material de venda antes da busca.
+
+svg/   — vetor, fonte da verdade. Escala infinita, cor editável.
+png/   — fundo transparente, 512 e 1024 px. Inclui ícones de app
+         (branco sobre Azul-noite, 192/512/1024 + maskable) e favicon 32.
+jpeg/ e jpg/ — mesmo conteúdo, 1024 px, com fundo chapado
+         (JPEG não tem transparência): Papel #F9FAFC ou Azul-noite #0C273E.
+
+Cores: Azul Kairo #146099 · Azul-noite #0C273E · Areia #ECE0CE · Branco #FFFFFF
+
+Versões
+  simbolo              — círculo com o quarto preenchido. Mín. 16 px.
+  simbolo-reduzido     — traço 3.2 / raio 8.4, para abaixo de 20 px. Mín. 12 px.
+  horizontal           — principal: "kair" + símbolo no lugar do "o". Mín. 88 px.
+  horizontal-descritor — só nos primeiros meses. Mín. 132 px.
+  empilhado            — peça vertical: cartão, adesivo. Mín. 64 px.
+
+Tipografia: os SVGs com texto estão com texto VIVO (Inter 600, entreletra
+-0,02 em). Antes da entrega final, converter em curvas e conferir as quatro
+medidas do símbolo na fonte final (§4 do manual). Nos PNG/JPEG o texto foi
+rasterizado com a fonte disponível no sistema — se a Inter não estiver
+instalada, regenere a partir do SVG com a Inter ativa.
+
+Respiro mínimo em volta do logo = raio do círculo. Nada entra nessa área.

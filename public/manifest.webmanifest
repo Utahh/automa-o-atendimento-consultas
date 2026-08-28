@@ -1,15 +1,22 @@
 {
   "name": "Kairo",
   "short_name": "Kairo",
-  "description": "Agenda, atendimento e cobrança para quem vive de consulta.",
+  "description": "A IA cuida do negocio. Voce cuida do cliente.",
   "start_url": "/hoje",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#fbfaf8",
-  "theme_color": "#0f766e",
+  "background_color": "#F9FAFC",
+  "theme_color": "#0C273E",
   "lang": "pt-BR",
+  "dir": "ltr",
   "icons": [
     { "src": "/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icone-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

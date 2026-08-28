@@ -102,9 +102,21 @@ export function alvosPequenos(): AlvoPequeno[] {
       if (s.visibility === 'hidden' || s.display === 'none') return false;
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) return false;
-      // Link dentro de parágrafo é texto corrido, não alvo isolado.
-      const dentroDeTexto = el.closest('p, li:not([class*="alvo"])') !== null;
-      return !dentroDeTexto && (r.width < MINIMO || r.height < MINIMO);
+      /*
+       * Link dentro de texto corrido é texto, não alvo isolado: o dedo mira a
+       * frase, não o retângulo. Vale para parágrafo, item de lista e para
+       * qualquer link que divida o pai com outro texto — o caso do e-mail do
+       * encarregado no rodapé da página pública.
+       */
+      const emParagrafo = el.closest('p, li:not([class*="alvo"])') !== null;
+      const pai = el.parentElement;
+      const textoDoPai = (pai?.textContent ?? '').trim();
+      const textoDoElemento = (el.textContent ?? '').trim();
+      const divideLinhaComTexto =
+        el.tagName === 'A' && pai !== null && textoDoPai.length > textoDoElemento.length;
+
+      if (emParagrafo || divideLinhaComTexto) return false;
+      return r.width < MINIMO || r.height < MINIMO;
     })
     .slice(0, 10)
     .map((el) => {
