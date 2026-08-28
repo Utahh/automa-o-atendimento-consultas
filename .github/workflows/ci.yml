@@ -1,0 +1,175 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # ── 1. O que é rápido roda primeiro e barra o resto ────────────────────────
+  qualidade:
+    name: Formato, lint e tipos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Formatação
+        run: npm run format:check
+
+      - name: ESLint (inclui a regra das camadas)
+        run: npm run lint
+
+      - name: Regras de UI (z-index, i18n, data no cliente)
+        run: npm run lint:ui
+
+      - name: Tipos
+        run: npm run typecheck
+
+  # ── 2. O domínio é puro: testa sem banco e sem mock ────────────────────────
+  unidade:
+    name: Testes de unidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  # ── 3. Migrations e RLS aplicam num Postgres de verdade ───────────────────
+  banco:
+    name: Migrations e RLS
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kairo
+          POSTGRES_PASSWORD: kairo
+          POSTGRES_DB: kairo
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kairo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://kairo:kairo@localhost:5432/kairo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      # Enquanto não houver migrations versionadas, o schema é gerado a partir
+      # do TypeScript. Assim que a primeira migration for commitada, este passo
+      # vira apenas validação de que nada ficou fora do versionamento.
+      - name: Gerar migrations a partir do schema
+        run: npm run db:generate
+
+      - name: Aplicar migrations
+        run: npm run db:migrate
+
+      - name: Aplicar políticas de RLS
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f drizzle/rls.sql
+
+      - name: Nenhuma tabela de negócio sem RLS
+        run: |
+          FALTANDO=$(psql "$DATABASE_URL" -tAc "
+            select string_agg(tablename, ', ')
+            from pg_tables
+            where schemaname = 'public'
+              and tablename not in ('__drizzle_migrations', 'webhooks_recebidos')
+              and not rowsecurity")
+          if [ -n "$FALTANDO" ]; then
+            echo "::error::Tabela sem RLS: $FALTANDO"
+            exit 1
+          fi
+          echo "Todas as tabelas de negócio têm RLS."
+
+  # ── 4. A tela não estoura, não colide e não tem alvo pequeno ──────────────
+  layout:
+    name: Layout nos cinco viewports
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [qualidade]
+    env:
+      DATABASE_URL: postgres://kairo:kairo@localhost:5432/kairo
+      APP_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      - name: Cache do Playwright
+        uses: actions/cache@v4
+        id: cache-playwright
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Instalar o Chromium
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npm run test:e2e:install
+
+      - name: Instalar dependências do sistema
+        if: steps.cache-playwright.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - run: npm run test:e2e
+
+      - name: Guardar o relatório quando falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ── 5. O orçamento de JavaScript é verificado, não prometido ──────────────
+  orcamento:
+    name: Orçamento de JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [qualidade]
+    env:
+      DATABASE_URL: postgres://kairo:kairo@localhost:5432/kairo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Conferir os limites
+        run: node scripts/check-bundle-budget.mjs

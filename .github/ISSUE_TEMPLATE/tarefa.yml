@@ -1,0 +1,27 @@
+name: Tarefa
+description: Uma unidade de trabalho da sprint
+labels: [tarefa]
+body:
+  - type: dropdown
+    id: trilha
+    attributes:
+      label: Trilha
+      options: [back-end, front-end e UX/UI, ambas]
+    validations:
+      required: true
+  - type: input
+    id: sprint
+    attributes:
+      label: Sprint
+      placeholder: '1 (dias 1–10)'
+  - type: textarea
+    id: historia
+    attributes:
+      label: A história
+      placeholder: Como profissional, quero … para …
+    validations:
+      required: true
+  - type: textarea
+    id: pronto
+    attributes:
+      label: O que precisa estar verdadeiro para fechar

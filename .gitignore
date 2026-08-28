@@ -1,0 +1,36 @@
+# dependências
+node_modules/
+.pnp
+.pnp.*
+
+# build
+.next/
+out/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# testes
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# ambiente
+.env
+.env.*
+!.env.example
+.vercel
+
+# sistema
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# editor
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

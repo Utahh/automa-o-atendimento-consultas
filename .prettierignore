@@ -1,0 +1,7 @@
+.next
+dist
+node_modules
+drizzle/**/*.sql
+playwright-report
+test-results
+package-lock.json

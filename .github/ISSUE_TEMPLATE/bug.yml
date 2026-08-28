@@ -1,0 +1,29 @@
+name: Defeito
+description: Alguma coisa não funciona como deveria
+labels: [defeito]
+body:
+  - type: textarea
+    id: o-que-acontece
+    attributes:
+      label: O que acontece
+      description: E o que deveria acontecer no lugar.
+    validations:
+      required: true
+  - type: input
+    id: onde
+    attributes:
+      label: Tela ou rota
+      placeholder: /agenda
+  - type: dropdown
+    id: largura
+    attributes:
+      label: Largura da tela
+      options: ['320', '360', '768', '1024', '1440', 'não sei']
+  - type: textarea
+    id: passos
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abrir /agenda
+        2. Tocar em "Novo agendamento"
+        3. ...

@@ -1,0 +1,28 @@
+# Compose do VPS. Só o worker mora aqui — o web está na Vercel.
+#
+#   IMAGEM_WORKER=ghcr.io/utahh/automa-o-atendimento-consultas/worker:<sha> \
+#     docker compose up -d
+services:
+  worker:
+    image: ${IMAGEM_WORKER:-ghcr.io/utahh/automa-o-atendimento-consultas/worker:producao}
+    restart: on-failure:5
+    env_file: [.env]
+    environment:
+      NODE_ENV: production
+      TZ: America/Sao_Paulo
+      WORKER_PORT: 3001
+    ports:
+      - '127.0.0.1:3001:3001'
+    mem_limit: 512m
+    cpus: 0.5
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:3001/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

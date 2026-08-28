@@ -1,0 +1,164 @@
+@import 'tailwindcss';
+@import '../shared/ui/z-index.css';
+
+/* ───────────────────────────────────────────────────────────────
+   Tokens. Cor, tipografia e espaço vivem aqui — nunca no componente.
+   ─────────────────────────────────────────────────────────────── */
+@theme {
+  --color-fundo: oklch(98.5% 0.003 250);
+  --color-fundo-2: oklch(96.2% 0.005 250);
+  --color-cartao: oklch(100% 0 0);
+  --color-linha: oklch(90% 0.007 250);
+  --color-tinta: oklch(21% 0.015 255);
+  --color-tinta-2: oklch(47% 0.014 255);
+  --color-tinta-3: oklch(61% 0.012 255);
+  --color-acento: oklch(52% 0.11 195);
+  --color-acento-suave: oklch(94.5% 0.025 195);
+  --color-ok: oklch(52% 0.13 150);
+  --color-perigo: oklch(53% 0.18 27);
+
+  --font-sans: 'Inter var', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', monospace;
+
+  /*
+   * Alvo de toque mínimo. WCAG 2.5.8 pede 24; o produto exige 48.
+   *
+   * Em px de propósito: a raiz usa clamp() e cai para 15px em tela estreita —
+   * 3rem viraria 45px justamente onde o dedo tem menos espaço.
+   */
+  --spacing-toque: 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --color-fundo: oklch(14% 0.011 255);
+    --color-fundo-2: oklch(17.5% 0.012 255);
+    --color-cartao: oklch(19.5% 0.013 255);
+    --color-linha: oklch(29% 0.015 255);
+    --color-tinta: oklch(95% 0.006 250);
+    --color-tinta-2: oklch(72% 0.012 252);
+    --color-tinta-3: oklch(57% 0.012 252);
+    --color-acento: oklch(74% 0.12 190);
+    --color-acento-suave: oklch(26% 0.045 195);
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────
+   As dez regras contra texto em cima de texto, na forma de CSS.
+   ─────────────────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Tipografia com clamp: nunca um tamanho fixo. */
+    font-size: clamp(15px, 0.9rem + 0.2vw, 17px);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--color-fundo);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    /* O corpo NUNCA rola na horizontal. Conteúdo largo rola dentro de si. */
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    /* Sem quebra órfã e sem título de uma palavra na segunda linha. */
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  p {
+    text-wrap: pretty;
+    margin: 0;
+  }
+
+  /* Regra 3: a causa nº 1 de estouro horizontal. */
+  .flex > *,
+  .grid > * {
+    min-width: 0;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-acento);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Regra 4: texto longo declara o comportamento. */
+  .texto-bloco {
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+
+  .texto-linha {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  /* Regra 7: todo conteúdo largo dentro do próprio scroller. */
+  .rolagem-x {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Rolagem presa em seções longas fora da tela. */
+  .secao-longa {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  /* Alvo de toque: requisito, não cortesia. */
+  .alvo-toque {
+    min-height: var(--spacing-toque);
+    min-width: var(--spacing-toque);
+  }
+
+  /* Só transform e opacity. Nunca width, top, height. */
+  .anima-entrada {
+    animation: entrada 160ms ease-out;
+  }
+
+  @keyframes entrada {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

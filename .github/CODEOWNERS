@@ -1,0 +1,8 @@
+# Toda mudança passa pelo dono do repositório.
+*           @Utahh
+
+# A fronteira e a infraestrutura pedem atenção redobrada.
+/src/shared/db/       @Utahh
+/drizzle/             @Utahh
+/.github/workflows/   @Utahh
+/infra/               @Utahh

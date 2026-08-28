@@ -1,0 +1,64 @@
+Licença Proprietária — Kairo
+Copyright (c) 2026 Cauan Guilherme Alves de Lima. Todos os direitos reservados.
+
+Este repositório é público para fins de transparência, avaliação técnica e
+portfólio. Ser visível NÃO o torna software livre nem de código aberto.
+
+1. CONCESSÃO LIMITADA
+   É concedida permissão para visualizar e ler o código-fonte contido neste
+   repositório, exclusivamente para os fins de avaliação, estudo pessoal e
+   análise técnica.
+
+2. RESTRIÇÕES
+   Salvo autorização prévia e por escrito do titular dos direitos autorais, é
+   expressamente PROIBIDO:
+   a) usar o software, no todo ou em parte, em qualquer ambiente produtivo ou
+      comercial;
+   b) copiar, reproduzir, publicar ou redistribuir o código, em forma original
+      ou modificada;
+   c) criar obras derivadas, incluindo forks destinados a uso próprio ou de
+      terceiros;
+   d) sublicenciar, vender, alugar, emprestar ou de qualquer forma transferir
+      direitos sobre o software;
+   e) remover ou alterar avisos de titularidade, autoria ou licença;
+   f) utilizar o código como material de treinamento para modelos de
+      aprendizado de máquina destinados a geração de código.
+
+3. CONTRIBUIÇÕES
+   Ao enviar qualquer contribuição (pull request, patch, sugestão de código), o
+   contribuinte cede ao titular dos direitos autorais, de forma gratuita,
+   irrevogável, mundial e não exclusiva, todos os direitos patrimoniais sobre a
+   contribuição, permitindo sua exploração comercial sem contrapartida.
+
+4. MARCAS
+   "Kairo", o nome do produto e seus elementos visuais não são licenciados por
+   este documento.
+
+5. AUSÊNCIA DE GARANTIA
+   O SOFTWARE É FORNECIDO "COMO ESTÁ", SEM GARANTIA DE QUALQUER NATUREZA,
+   EXPRESSA OU IMPLÍCITA, INCLUINDO, SEM LIMITAÇÃO, AS GARANTIAS DE
+   COMERCIABILIDADE, ADEQUAÇÃO A UMA FINALIDADE ESPECÍFICA E NÃO VIOLAÇÃO. EM
+   NENHUMA HIPÓTESE O TITULAR SERÁ RESPONSÁVEL POR QUALQUER RECLAMAÇÃO, DANO OU
+   OUTRA RESPONSABILIDADE, SEJA EM AÇÃO CONTRATUAL, EXTRACONTRATUAL OU DE OUTRA
+   FORMA, DECORRENTE DE, OU EM CONEXÃO COM, O SOFTWARE OU SEU USO.
+
+6. LEGISLAÇÃO APLICÁVEL
+   Esta licença é regida pelas leis da República Federativa do Brasil, em
+   especial pela Lei nº 9.610/1998 (Direitos Autorais) e pela Lei nº 9.609/1998
+   (Programa de Computador). Fica eleito o foro da comarca de domicílio do
+   titular para dirimir quaisquer controvérsias.
+
+Para solicitar autorização de uso ou licenciamento comercial, entre em contato
+com o titular dos direitos autorais.
+
+---
+
+PROPRIETARY LICENSE — Kairo
+Copyright (c) 2026 Cauan Guilherme Alves de Lima. All rights reserved.
+
+This repository is public for transparency, technical evaluation and portfolio
+purposes only. Public visibility does NOT make it open source. Permission is
+granted to view and read the source code for evaluation and study only. Any
+use, reproduction, modification, distribution, sublicensing or commercial
+exploitation is prohibited without prior written permission from the copyright
+holder. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
