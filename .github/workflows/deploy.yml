@@ -62,7 +62,7 @@ jobs:
     timeout-minutes: 10
     environment: ${{ needs.decidir.outputs.ambiente }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.decidir.outputs.sha }}
       - uses: actions/setup-node@v4
@@ -95,7 +95,7 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.decidir.outputs.sha }}
       - uses: actions/setup-node@v4
@@ -137,7 +137,7 @@ jobs:
     timeout-minutes: 20
     environment: ${{ needs.decidir.outputs.ambiente }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.decidir.outputs.sha }}
 
