@@ -131,7 +131,7 @@ jobs:
       - run: npm ci
 
       - name: Cache do Playwright
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: cache-playwright
         with:
           path: ~/.cache/ms-playwright
