@@ -25,8 +25,13 @@ concurrency:
   group: deploy-${{ github.event.workflow_run.head_branch || github.ref_name }}
   cancel-in-progress: false
 
+# O GHCR exige o caminho da imagem em MINUSCULA, e `github.repository` traz o
+# dono como ele foi escrito no GitHub (Utahh) — a tag e recusada. Fixo aqui em
+# vez de calcular: o nome do pacote e uma decisao, nao uma consequencia do
+# slug do repositorio, que ainda carrega os caracteres quebrados do nome
+# original.
 env:
-  REGISTRO: ghcr.io/${{ github.repository }}
+  REGISTRO: ghcr.io/utahh/kairo
 
 jobs:
   # ── Decide para onde vai, e se vai ─────────────────────────────────────────
