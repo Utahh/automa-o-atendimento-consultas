@@ -23,7 +23,7 @@ export function AgendaDia({
       {agendamentos.map((a) => (
         <List.Item key={a.id}>
           <SlotChip horaFormatada={a.horaFormatada} status={a.status} agora={a.id === idDoAgora} />
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 basis-40 flex-col">
             <span className="texto-linha text-base font-medium">{a.clienteNome}</span>
             <span className="texto-linha text-fg-muted text-sm">{a.servicoNome}</span>
           </div>

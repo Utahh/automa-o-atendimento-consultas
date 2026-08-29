@@ -20,7 +20,12 @@ export function List({
 
 List.Item = function ListItem({ children }: { readonly children: ReactNode }) {
   return (
-    <li className="border-border bg-surface flex min-h-16 min-w-0 items-center gap-3 rounded-xl border px-3 py-2">
+    /*
+     * `flex-wrap`: a 200% de zoom (requisito, nao cortesia) o chip de horario e
+     * a etiqueta de estado nao cabem na mesma linha em 320 px. Sem quebrar, o
+     * corpo da pagina rola na horizontal — que e a regra 7.
+     */
+    <li className="border-border bg-surface flex min-h-16 min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-3 py-2">
       {children}
     </li>
   );

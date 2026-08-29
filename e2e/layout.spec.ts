@@ -47,12 +47,16 @@ for (const largura of VIEWPORTS) {
   }
 }
 
-test('zoom de 200% continua sem estouro horizontal', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 800 });
-  await page.goto('/hoje');
-  // 200% de zoom em 640 px lógicos é o equivalente a 320 px de conteúdo.
-  await page.evaluate(() => {
-    document.documentElement.style.fontSize = '200%';
+// Zoom de 200% em 320 px e requisito (WCAG 1.4.4), nao cortesia — e e onde a
+// agenda cheia estoura primeiro: chip de horario, nome e etiqueta de estado
+// disputam a mesma linha.
+for (const rota of ['/hoje', '/agenda', '/p/demo']) {
+  test(rota + ' com zoom de 200% continua sem estouro horizontal', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto(rota);
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+    });
+    expect(await page.evaluate(estouroHorizontal)).toBeLessThanOrEqual(1);
   });
-  expect(await page.evaluate(estouroHorizontal)).toBeLessThanOrEqual(1);
-});
+}

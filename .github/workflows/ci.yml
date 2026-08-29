@@ -7,8 +7,11 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+# Agrupado pelo COMMIT, nao pela ref: um push numa branch com PR aberto dispara
+# dois runs do mesmo workflow sobre o mesmo codigo — dobra o custo e ainda deixa
+# duas entradas do mesmo check, uma das quais pode bloquear o merge.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 permissions:
