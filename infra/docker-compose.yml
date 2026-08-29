@@ -3,10 +3,10 @@
 # O estado vive todo no Postgres (Supabase), nao no servidor: se a maquina
 # cair, recriar e um `docker compose up -d`.
 #
-#   IMAGEM_WEB=ghcr.io/utahh/automa-o-atendimento-consultas/web:<sha> #   IMAGEM_WORKER=ghcr.io/utahh/automa-o-atendimento-consultas/worker:<sha> #     docker compose up -d
+#   IMAGEM_WEB=ghcr.io/utahh/kairo/web:<sha> #   IMAGEM_WORKER=ghcr.io/utahh/kairo/worker:<sha> #     docker compose up -d
 services:
   web:
-    image: ${IMAGEM_WEB:-ghcr.io/utahh/automa-o-atendimento-consultas/web:producao}
+    image: ${IMAGEM_WEB:-ghcr.io/utahh/kairo/web:producao}
     restart: unless-stopped
     env_file: [.env]
     environment:
@@ -30,7 +30,7 @@ services:
       start_period: 20s
 
   worker:
-    image: ${IMAGEM_WORKER:-ghcr.io/utahh/automa-o-atendimento-consultas/worker:producao}
+    image: ${IMAGEM_WORKER:-ghcr.io/utahh/kairo/worker:producao}
     # on-failure limitado: um worker que reinicia em loop precisa aparecer no
     # painel, nao se esconder atras de um restart infinito.
     restart: on-failure:5
