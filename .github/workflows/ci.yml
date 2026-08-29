@@ -1,17 +1,20 @@
 name: CI
 
+# `push` so na main. Em branch com PR aberto, o run do push e o do PR cobrem o
+# mesmo codigo: rodar os dois dobra o custo e deixa duas entradas do mesmo
+# check — e a que for cancelada bloqueia o merge, mesmo com a outra verde.
+#
+# O deploy continua funcionando: ele escuta o workflow_run do CI, e o
+# `head_branch` de um run de pull_request e a propria branch de origem.
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
 
-# Agrupado pelo COMMIT, nao pela ref: um push numa branch com PR aberto dispara
-# dois runs do mesmo workflow sobre o mesmo codigo — dobra o custo e ainda deixa
-# duas entradas do mesmo check, uma das quais pode bloquear o merge.
 concurrency:
-  group: ci-${{ github.event.pull_request.head.sha || github.sha }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
