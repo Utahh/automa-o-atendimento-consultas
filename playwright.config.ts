@@ -30,7 +30,15 @@ export default defineConfig({
     { name: 'preparo', testMatch: /sessao\.setup\.ts/ },
     {
       name: 'chromium',
+      testIgnore: /cliente\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], storageState: 'e2e/.sessao.json' },
+      dependencies: ['preparo'],
+    },
+    {
+      // O app do cliente entra com outra sessao — e e isso que o teste prova.
+      name: 'cliente',
+      testMatch: /cliente\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: 'e2e/.sessao-cliente.json' },
       dependencies: ['preparo'],
     },
   ],

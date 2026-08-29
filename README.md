@@ -101,6 +101,8 @@ A dependência é sempre para baixo, e isso **não é combinado verbal**:
 ## Documentação
 
 - [Produto](docs/PRODUCT.md) — os cinco setores, as personas, as 13 capacidades, a ordem de construção
+- [As duas frentes](docs/FRONTS.md) — app do cliente e painel do profissional: fila, check-in, janela, avaliação
+- [ADR-001](docs/ADR-001-cliente-com-conta.md) — por que o cliente passou a ter conta, e como o risco é contido
 - [Arquitetura](docs/ARCHITECTURE.md) — as camadas, o padrão de caso de uso, as quatro portas de escrita
 - [Interface](docs/UI_RULES.md) — camadas de z-index, as dez regras contra texto sobreposto, menu suspenso
 - [Marca](docs/BRAND.md) — o símbolo, a paleta, a voz, e o que ainda bloqueia o lançamento

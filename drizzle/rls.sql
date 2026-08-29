@@ -50,6 +50,29 @@ begin
 exception when duplicate_object then null;
 end $$;
 
+-- O papel de quem esta na sessao: 'usuario' (o estudio), 'cliente' ou
+-- 'sistema' (job). Fixado por withTenant/withCliente/withSystemTenant.
+create or replace function app_papel() returns text
+language sql stable as $$
+  select coalesce(nullif(current_setting('app.papel', true), ''), 'usuario')
+$$;
+
+-- Qual cliente esta na sessao. Nulo para quem nao e cliente.
+create or replace function app_cliente_id() returns uuid
+language sql stable as $$
+  select nullif(current_setting('app.cliente_id', true), '')::uuid
+$$;
+
+-- Verdadeiro quando a linha pertence a quem esta pedindo.
+-- Para o estudio, toda linha do tenant pertence. Para o cliente, so as dele.
+create or replace function app_ve_cliente(p_cliente_id uuid) returns boolean
+language sql stable as $$
+  select case
+    when app_papel() = 'cliente' then p_cliente_id = app_cliente_id()
+    else true
+  end
+$$;
+
 -- ---------------------------------------------------------------------------
 -- ARMADILHA CONHECIDA, JA PAGA POR OUTROS:
 --
@@ -59,21 +82,80 @@ end $$;
 -- `app_tenant_id()`, que le apenas uma variavel de sessao.
 -- ---------------------------------------------------------------------------
 
+-- ---------------------------------------------------------------------------
+-- 1. Tabelas do ESTUDIO: o cliente nao encosta.
+--    Ficha, caixa, automacao e trilha nao sao dele.
+-- ---------------------------------------------------------------------------
 do $$
 declare
   t text;
-  tabelas text[] := array[
-    'membro', 'local', 'recurso', 'servico', 'servico_recurso', 'cliente',
-    'jornada_trabalho', 'bloqueio', 'agendamento', 'automacao', 'evento'
-  ];
+  tabelas text[] := array['membro', 'local', 'automacao', 'evento'];
 begin
   foreach t in array tabelas loop
     execute format('alter table %I enable row level security', t);
     execute format('alter table %I force row level security', t);
     execute format('drop policy if exists %I on %I', t || '_isolamento', t);
     execute format(
-      'create policy %I on %I using (tenant_id = app_tenant_id()) with check (tenant_id = app_tenant_id())',
+      'create policy %I on %I using (tenant_id = app_tenant_id() and app_papel() <> ''cliente'')'
+      || ' with check (tenant_id = app_tenant_id() and app_papel() <> ''cliente'')',
       t || '_isolamento', t
+    );
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- 2. CATALOGO: o cliente LE (precisa para escolher) e nunca escreve.
+--    Servico, quem atende, quando atende, e o que esta fora.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  t text;
+  tabelas text[] := array[
+    'servico', 'servico_recurso', 'recurso', 'jornada_trabalho', 'bloqueio',
+    'janela_atendimento'
+  ];
+begin
+  foreach t in array tabelas loop
+    execute format('alter table %I enable row level security', t);
+    execute format('alter table %I force row level security', t);
+    execute format('drop policy if exists %I on %I', t || '_leitura', t);
+    execute format('drop policy if exists %I on %I', t || '_escrita', t);
+    execute format('drop policy if exists %I on %I', t || '_isolamento', t);
+
+    execute format(
+      'create policy %I on %I for select using (tenant_id = app_tenant_id())',
+      t || '_leitura', t
+    );
+    execute format(
+      'create policy %I on %I for all to public'
+      || ' using (tenant_id = app_tenant_id() and app_papel() <> ''cliente'')'
+      || ' with check (tenant_id = app_tenant_id() and app_papel() <> ''cliente'')',
+      t || '_escrita', t
+    );
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- 3. DADO COM DONO: o cliente ve so o que e dele.
+--    E a linha que o ADR-001 exige — sem ela, ter conta significaria ler a
+--    agenda inteira do estudio.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  t text;
+  tabelas text[] := array['cliente', 'agendamento', 'fila_espera', 'avaliacao'];
+  coluna text;
+begin
+  foreach t in array tabelas loop
+    coluna := case when t = 'cliente' then 'id' else 'cliente_id' end;
+
+    execute format('alter table %I enable row level security', t);
+    execute format('alter table %I force row level security', t);
+    execute format('drop policy if exists %I on %I', t || '_isolamento', t);
+    execute format(
+      'create policy %I on %I using (tenant_id = app_tenant_id() and app_ve_cliente(%I))'
+      || ' with check (tenant_id = app_tenant_id() and app_ve_cliente(%I))',
+      t || '_isolamento', t, coluna, coluna
     );
   end loop;
 end $$;
@@ -134,6 +216,24 @@ as $$
   where m.usuario_id = p_usuario_id
   order by m.criado_em
 $$;
+
+create or replace function cliente_do_usuario(p_usuario_id uuid)
+returns table (cliente_id uuid, tenant_id uuid, fuso text)
+language sql
+security definer
+set search_path = public
+as $$
+  select c.id, c.tenant_id, t.fuso
+  from cliente c
+  join tenant t on t.id = c.tenant_id
+  where c.usuario_id = p_usuario_id
+    and c.anonimizado_em is null
+  order by c.criado_em
+  limit 1
+$$;
+
+revoke all on function cliente_do_usuario(uuid) from public;
+grant execute on function cliente_do_usuario(uuid) to kairo_app;
 
 revoke all on function tenants_do_usuario(uuid) from public;
 grant execute on function tenants_do_usuario(uuid) to kairo_app;

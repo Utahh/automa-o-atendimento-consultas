@@ -84,6 +84,26 @@ export const agendamentoRepo = {
       .orderBy(schema.agendamento.inicio);
   },
 
+  /** O periodo inteiro, com nome de cliente e servico. Usado pelo app do cliente. */
+  async doPeriodo(tx: Tx, de: Date, ate: Date) {
+    return tx
+      .select({
+        id: schema.agendamento.id,
+        inicio: schema.agendamento.inicio,
+        fim: schema.agendamento.fim,
+        status: schema.agendamento.status,
+        versao: schema.agendamento.versao,
+        checkinEm: schema.agendamento.checkinEm,
+        clienteNome: schema.cliente.nome,
+        servicoNome: schema.servico.nome,
+      })
+      .from(schema.agendamento)
+      .innerJoin(schema.cliente, eq(schema.cliente.id, schema.agendamento.clienteId))
+      .innerJoin(schema.servico, eq(schema.servico.id, schema.agendamento.servicoId))
+      .where(and(gte(schema.agendamento.inicio, de), lt(schema.agendamento.inicio, ate)))
+      .orderBy(schema.agendamento.inicio);
+  },
+
   async clientesRecentes(tx: Tx, quantos: number) {
     return tx
       .select({ id: schema.cliente.id, nome: schema.cliente.nome })
@@ -159,6 +179,58 @@ export const agendamentoRepo = {
       .returning();
     if (linha === undefined) throw new Error('Insert de agendamento nao devolveu linha.');
     return linha;
+  },
+
+  /** Chegou. Bloqueio otimista igual ao resto: a UI devolve a versao que leu. */
+  async registrarCheckin(tx: Tx, id: string, versao: number, em: Date) {
+    const [linha] = await tx
+      .update(schema.agendamento)
+      .set({ status: 'chegou', checkinEm: em, versao: versao + 1 })
+      .where(and(eq(schema.agendamento.id, id), eq(schema.agendamento.versao, versao)))
+      .returning();
+    return linha ?? null;
+  },
+
+  /** As janelas somam a jornada; os bloqueios subtraem. */
+  async janelas(tx: Tx, de: Date, ate: Date): Promise<readonly Intervalo[]> {
+    return tx
+      .select({ inicio: schema.janelaAtendimento.inicio, fim: schema.janelaAtendimento.fim })
+      .from(schema.janelaAtendimento)
+      .where(and(lt(schema.janelaAtendimento.inicio, ate), gte(schema.janelaAtendimento.fim, de)));
+  },
+
+  /** Quem atende este servico. Base da escolha de profissional pelo cliente. */
+  async profissionaisDoServico(tx: Tx, servicoId: string) {
+    return tx
+      .select({ id: schema.recurso.id, nome: schema.recurso.nome })
+      .from(schema.servicoRecurso)
+      .innerJoin(schema.recurso, eq(schema.recurso.id, schema.servicoRecurso.recursoId))
+      .where(and(eq(schema.servicoRecurso.servicoId, servicoId), eq(schema.recurso.ativo, true)))
+      .orderBy(schema.recurso.nome);
+  },
+
+  /** Todos os recursos ativos — usado quando o servico nao restringe quem atende. */
+  async recursosAtivos(tx: Tx) {
+    return tx
+      .select({ id: schema.recurso.id, nome: schema.recurso.nome })
+      .from(schema.recurso)
+      .where(eq(schema.recurso.ativo, true))
+      .orderBy(schema.recurso.nome);
+  },
+
+  async servicosDoCatalogo(tx: Tx) {
+    return tx
+      .select({
+        id: schema.servico.id,
+        nome: schema.servico.nome,
+        duracaoMin: schema.servico.duracaoMin,
+        intervaloMin: schema.servico.intervaloMin,
+        antecedenciaMinimaMin: schema.servico.antecedenciaMinimaMin,
+        precoCentavos: schema.servico.precoCentavos,
+      })
+      .from(schema.servico)
+      .where(eq(schema.servico.ativo, true))
+      .orderBy(schema.servico.nome);
   },
 
   /** Escrita com bloqueio otimista: devolve null se a versao ja mudou. */

@@ -8,6 +8,13 @@
       "when": 1787966382213,
       "tag": "0000_young_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788011132594,
+      "tag": "0001_fila_janela_avaliacao",
+      "breakpoints": true
     }
   ]
 }

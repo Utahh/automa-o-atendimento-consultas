@@ -1,5 +1,14 @@
 import { db, schema } from './client';
-import { EMAIL_DEMO, TENANT_DEMO, USUARIO_DEMO } from './ids-de-exemplo';
+import {
+  CLIENTE_DEMO,
+  EMAIL_CLIENTE,
+  EMAIL_DEMO,
+  EMAIL_PROFISSIONAL,
+  TENANT_DEMO,
+  USUARIO_CLIENTE,
+  USUARIO_DEMO,
+  USUARIO_PROFISSIONAL,
+} from './ids-de-exemplo';
 
 /**
  * Dados de exemplo da Sprint 1.
@@ -45,11 +54,25 @@ async function semear(): Promise<void> {
     .values({ tenantId: t.id, nome: 'Sala 1' })
     .returning();
 
-  await db.insert(schema.recurso).values({
+  // Duas profissionais: o cliente precisa ter de quem escolher.
+  await db.insert(schema.usuario).values([
+    { id: USUARIO_PROFISSIONAL, email: EMAIL_PROFISSIONAL, nome: 'Bruna' },
+    { id: USUARIO_CLIENTE, email: EMAIL_CLIENTE, nome: 'Bia' },
+  ]);
+
+  await db.insert(schema.membro).values({
     tenantId: t.id,
-    localId: sala?.id ?? null,
-    nome: 'Ana',
+    usuarioId: USUARIO_PROFISSIONAL,
+    papel: 'profissional',
   });
+
+  const recursos = await db
+    .insert(schema.recurso)
+    .values([
+      { tenantId: t.id, localId: sala?.id ?? null, nome: 'Ana', usuarioId },
+      { tenantId: t.id, localId: sala?.id ?? null, nome: 'Bruna', usuarioId: USUARIO_PROFISSIONAL },
+    ])
+    .returning();
 
   const servicos = await db
     .insert(schema.servico)
@@ -84,20 +107,60 @@ async function semear(): Promise<void> {
   const clientes = await db
     .insert(schema.cliente)
     .values([
-      { tenantId: t.id, nome: 'Bia Ferraz', telefone: '+5514991110001' },
+      // Bia entra no app com a conta dela (ADR-001).
+      {
+        id: CLIENTE_DEMO,
+        tenantId: t.id,
+        nome: 'Bia Ferraz',
+        telefone: '+5514991110001',
+        usuarioId: USUARIO_CLIENTE,
+      },
       { tenantId: t.id, nome: 'Carla Nunes', telefone: '+5514991110002' },
       { tenantId: t.id, nome: 'Duda Prado', telefone: '+5514991110003' },
       { tenantId: t.id, nome: 'Elis Moraes', telefone: '+5514991110004' },
     ])
     .returning();
 
-  // Segunda a sabado, das 9 h as 12 h e das 14 h as 18 h.
-  await db.insert(schema.jornadaTrabalho).values(
-    [1, 2, 3, 4, 5, 6].flatMap((dia) => [
-      { tenantId: t.id, recursoId: null, diaDaSemana: dia, inicioMin: 9 * 60, fimMin: 12 * 60 },
-      { tenantId: t.id, recursoId: null, diaDaSemana: dia, inicioMin: 14 * 60, fimMin: 18 * 60 },
+  // Jornada por profissional: a Ana de segunda a sabado, a Bruna so a tarde.
+  // Sem isso, "escolher o profissional" nao teria o que diferenciar.
+  const ana = recursos[0];
+  const bruna = recursos[1];
+
+  await db.insert(schema.jornadaTrabalho).values([
+    ...[1, 2, 3, 4, 5, 6].flatMap((dia) => [
+      {
+        tenantId: t.id,
+        recursoId: ana?.id ?? null,
+        diaDaSemana: dia,
+        inicioMin: 9 * 60,
+        fimMin: 12 * 60,
+      },
+      {
+        tenantId: t.id,
+        recursoId: ana?.id ?? null,
+        diaDaSemana: dia,
+        inicioMin: 14 * 60,
+        fimMin: 18 * 60,
+      },
     ]),
-  );
+    ...[1, 2, 3, 4, 5].map((dia) => ({
+      tenantId: t.id,
+      recursoId: bruna?.id ?? null,
+      diaDaSemana: dia,
+      inicioMin: 13 * 60,
+      fimMin: 19 * 60,
+    })),
+  ]);
+
+  // Quem faz o que. Servico sem vinculo e atendido por qualquer um.
+  if (ana !== undefined && bruna !== undefined) {
+    await db.insert(schema.servicoRecurso).values(
+      servicos.flatMap((s) => [
+        { tenantId: t.id, servicoId: s.id, recursoId: ana.id },
+        { tenantId: t.id, servicoId: s.id, recursoId: bruna.id },
+      ]),
+    );
+  }
 
   // Dois horarios de hoje ja ocupados, para a tela nascer com conteudo.
   const primeiro = servicos[0];
@@ -143,7 +206,10 @@ async function semear(): Promise<void> {
     { tenantId: t.id, tipo: 'retorno', ativa: true },
   ]);
 
-  console.warn('[seed] pronto. Entre com ' + EMAIL_DEMO + ' — o codigo sai no log do servidor.');
+  console.warn('[seed] pronto. O codigo de acesso sai no log do servidor.');
+  console.warn('[seed]   estudio (dona):  ' + EMAIL_DEMO);
+  console.warn('[seed]   profissional:    ' + EMAIL_PROFISSIONAL);
+  console.warn('[seed]   cliente:         ' + EMAIL_CLIENTE);
 }
 
 semear()

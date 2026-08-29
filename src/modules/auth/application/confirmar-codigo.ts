@@ -42,13 +42,35 @@ export async function confirmarCodigo(
     return erro({ codigo: 'CODIGO_RECUSADO', motivo: 'INEXISTENTE' });
   }
 
+  /*
+   * Qual porta? Quem e membro entra pelo estudio; quem tem cadastro de cliente
+   * entra pela area do cliente. Nao existe as duas ao mesmo tempo: o membro
+   * ganha, porque quem trabalha ali precisa da agenda inteira.
+   */
   const tenants = await acessoRepo.tenantsDoUsuario(usuario.id);
   const primeiro = tenants[0];
-  if (primeiro === undefined) {
+
+  if (primeiro !== undefined) {
+    await acessoRepo.marcarUsado(registro.id);
+    return ok({
+      usuarioId: usuario.id,
+      tenantId: primeiro.tenant_id,
+      fuso: primeiro.fuso,
+      papel: 'estudio',
+    });
+  }
+
+  const comoCliente = await acessoRepo.clienteDoUsuario(usuario.id);
+  if (comoCliente === null) {
     return erro({ codigo: 'CODIGO_RECUSADO', motivo: 'INEXISTENTE' });
   }
 
   await acessoRepo.marcarUsado(registro.id);
-
-  return ok({ usuarioId: usuario.id, tenantId: primeiro.tenant_id, fuso: primeiro.fuso });
+  return ok({
+    usuarioId: usuario.id,
+    tenantId: comoCliente.tenant_id,
+    fuso: comoCliente.fuso,
+    papel: 'cliente',
+    clienteId: comoCliente.cliente_id,
+  });
 }

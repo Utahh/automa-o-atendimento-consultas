@@ -55,4 +55,12 @@ export const acessoRepo = {
     );
     return r.rows;
   },
+
+  /** O mesmo, pelo lado do cliente (ADR-001). Tambem de escopo minimo. */
+  async clienteDoUsuario(usuarioId: string) {
+    const r = await db.execute<{ cliente_id: string; tenant_id: string; fuso: string }>(
+      sql`select * from cliente_do_usuario(${usuarioId})`,
+    );
+    return r.rows[0] ?? null;
+  },
 };

@@ -1,12 +1,13 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { NaoAutenticado } from '../erros';
+import { NaoAutenticado, NaoAutorizado } from '../erros';
 import { env, FUSO_PADRAO } from '../config/env';
 import {
   COOKIE_DE_SESSAO,
   DURACAO_DA_SESSAO_MS,
   criarValorDeSessao,
   lerValorDeSessao,
+  type PapelDaSessao,
   type Sessao,
 } from './cookie';
 
@@ -14,7 +15,9 @@ import {
  * A identidade da porta de escrita: cookie assinado, httpOnly, sameSite=lax,
  * com prazo absoluto. A assinatura em si vive em `cookie.ts`.
  */
-export type { Sessao };
+export type { Sessao, PapelDaSessao };
+
+export type SessaoDeCliente = Sessao & { readonly papel: 'cliente'; readonly clienteId: string };
 
 function segredo(): string {
   const s = env().SESSAO_SECRET;
@@ -32,6 +35,22 @@ export async function exigirSessao(): Promise<Sessao> {
   const s = await sessaoAtual();
   if (s === null) throw new NaoAutenticado();
   return s;
+}
+
+/** A porta do estudio: dono, operador ou profissional. */
+export async function exigirSessaoDoEstudio(): Promise<Sessao> {
+  const s = await exigirSessao();
+  if (s.papel !== 'estudio') throw new NaoAutorizado('a area do estudio');
+  return s;
+}
+
+/** A porta do cliente. Sem clienteId nao ha sessao de cliente. */
+export async function exigirSessaoDeCliente(): Promise<SessaoDeCliente> {
+  const s = await exigirSessao();
+  if (s.papel !== 'cliente' || s.clienteId === undefined) {
+    throw new NaoAutorizado('a area do cliente');
+  }
+  return { ...s, papel: 'cliente', clienteId: s.clienteId };
 }
 
 export async function gravarSessao(sessao: Sessao): Promise<void> {

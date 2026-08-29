@@ -33,9 +33,14 @@ export { SheetNovoAgendamento, BotaoNovoAgendamento } from './ui/SheetNovoAgenda
 export { AcoesDaAgenda } from './ui/AcoesDaAgenda';
 export type { Opcao } from './ui/SheetNovoAgendamento';
 
-export { slotsLivres } from './domain/disponibilidade';
+export { slotsLivres, unirIntervalos } from './domain/disponibilidade';
+export { podeFazerCheckin, janelaDeCheckin } from './domain/checkin';
+export { criarAgendamento } from './application/criar-agendamento';
+export { fazerCheckin } from './application/fazer-checkin';
+export { cancelarAgendamento } from './application/cancelar-agendamento';
+export { abrirJanela } from './application/abrir-janela';
 export type { Intervalo, Disponibilidade } from './domain/disponibilidade';
 export { STATUS, podeIrPara, ocupaAgenda, ehFinal } from './domain/transicoes';
 export type { Status } from './domain/transicoes';
-export { janelasDoDia, formatarHora, diaDaSemanaDe } from './domain/jornada';
+export { janelasDoDia, formatarHora, formatarDia, diaDaSemanaDe } from './domain/jornada';
 export type { FaixaDeJornada } from './domain/jornada';

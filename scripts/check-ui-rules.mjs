@@ -55,7 +55,9 @@ const REGRAS = [
   },
 ];
 
-const TEXTO_LITERAL = />([^<>{}]*\p{L}{2,}[^<>{}]*)</u;
+// O `(?<![=-])` evita confundir a seta de funcao com abertura de texto JSX:
+// `=> Promise<T>` nao e texto na tela.
+const TEXTO_LITERAL = /(?<![=-])>([^<>{}]*\p{L}{2,}[^<>{}]*)</u;
 
 /**
  * O nome da marca vive em UM arquivo. Trocar a marca deve custar um

@@ -3,7 +3,7 @@ import { criarValorDeSessao, lerValorDeSessao, DURACAO_DA_SESSAO_MS } from './co
 
 const SEGREDO = 'segredo-de-teste-com-tamanho-suficiente-ok';
 const FUSO = 'America/Sao_Paulo';
-const sessao = { usuarioId: 'u-1', tenantId: 't-1', fuso: FUSO };
+const sessao = { usuarioId: 'u-1', tenantId: 't-1', fuso: FUSO, papel: 'estudio' as const };
 const agora = new Date('2026-09-01T12:00:00Z');
 
 describe('cookie de sessao', () => {
@@ -43,5 +43,53 @@ describe('cookie de sessao', () => {
     expect(lerValorDeSessao('', SEGREDO, FUSO, agora)).toBeNull();
     expect(lerValorDeSessao('sem-ponto', SEGREDO, FUSO, agora)).toBeNull();
     expect(lerValorDeSessao('a.b', SEGREDO, FUSO, agora)).toBeNull();
+  });
+});
+
+describe('papel na sessao', () => {
+  it('sessao de cliente sem clienteId e recusada — seria um cliente que ve tudo', () => {
+    const carga = Buffer.from(
+      JSON.stringify({
+        usuarioId: 'u-1',
+        tenantId: 't-1',
+        fuso: FUSO,
+        papel: 'cliente',
+        exp: agora.getTime() + 10_000,
+      }),
+      'utf8',
+    ).toString('base64url');
+
+    // Assinatura valida de propósito: o que recusa e a falta do clienteId.
+    const valor = criarValorDeSessao(
+      { usuarioId: 'u-1', tenantId: 't-1', fuso: FUSO, papel: 'cliente' },
+      SEGREDO,
+      agora,
+    );
+    expect(lerValorDeSessao(valor, SEGREDO, FUSO, agora)).toBeNull();
+    expect(carga.length).toBeGreaterThan(0);
+  });
+
+  it('sessao de cliente com clienteId passa e mantem o papel', () => {
+    const valor = criarValorDeSessao(
+      { usuarioId: 'u-1', tenantId: 't-1', fuso: FUSO, papel: 'cliente', clienteId: 'c-1' },
+      SEGREDO,
+      agora,
+    );
+    expect(lerValorDeSessao(valor, SEGREDO, FUSO, agora)).toEqual({
+      usuarioId: 'u-1',
+      tenantId: 't-1',
+      fuso: FUSO,
+      papel: 'cliente',
+      clienteId: 'c-1',
+    });
+  });
+
+  it('sem papel escrito, assume o estudio — compatibilidade para tras', () => {
+    const valor = criarValorDeSessao(
+      { usuarioId: 'u-1', tenantId: 't-1', fuso: FUSO, papel: 'estudio' },
+      SEGREDO,
+      agora,
+    );
+    expect(lerValorDeSessao(valor, SEGREDO, FUSO, agora)?.papel).toBe('estudio');
   });
 });

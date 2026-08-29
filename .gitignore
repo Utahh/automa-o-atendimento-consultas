@@ -16,6 +16,7 @@ playwright-report/
 test-results/
 blob-report/
 e2e/.sessao.json
+e2e/.sessao-cliente.json
 .playwright/
 
 # ambiente
@@ -38,3 +39,4 @@ npm-debug.log*
 
 # sessão de teste gerada pelo Playwright
 e2e/.sessao.json
+e2e/.sessao-cliente.json

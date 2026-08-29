@@ -107,6 +107,84 @@ describe.skipIf(URL_DO_BANCO === undefined)('isolamento entre clientes', () => {
     await cliente.query('rollback');
   });
 
+  /*
+   * O que o ADR-001 promete.
+   *
+   * Cliente com conta existe DENTRO do tenant: se a politica fosse so
+   * `tenant_id = app_tenant_id()`, ele leria a agenda inteira do estudio.
+   */
+  describe('o cliente com conta', () => {
+    const comoCliente = async (clienteId: string, sql: string, params: unknown[] = []) => {
+      await cliente.query('begin');
+      await cliente.query("select set_config('app.tenant_id', $1, true)", [tenantA]);
+      await cliente.query("select set_config('app.papel', 'cliente', true)");
+      await cliente.query("select set_config('app.cliente_id', $1, true)", [clienteId]);
+      try {
+        return await cliente.query(sql, params);
+      } finally {
+        await cliente.query('rollback');
+      }
+    };
+
+    it('não vê o agendamento de outro cliente do mesmo tenant', async () => {
+      await cliente.query('begin');
+      await cliente.query("select set_config('app.tenant_id', $1, true)", [tenantA]);
+      const { rows: ids } = await cliente.query<{ id: string; nome: string }>(
+        'select id, nome from cliente order by nome',
+      );
+      const { rows: svc } = await cliente.query<{ id: string }>(
+        `insert into servico (tenant_id, nome, duracao_min) values ($1, 'Corte fila', 30)
+         returning id`,
+        [tenantA],
+      );
+      const primeiro = ids[0];
+      const servicoId = svc[0]?.id;
+      expect(primeiro).toBeDefined();
+
+      // Um agendamento de OUTRA pessoa, criado pelo estúdio.
+      await cliente.query(
+        `insert into agendamento (tenant_id, cliente_id, servico_id, inicio, fim)
+         values ($1, $2, $3, '2026-10-01T13:00:00Z', '2026-10-01T13:30:00Z')`,
+        [tenantA, primeiro?.id, servicoId],
+      );
+      await cliente.query('commit');
+
+      const outroCliente = '33333333-3333-4333-8333-333333333333';
+      const { rows } = await comoCliente(outroCliente, 'select id from agendamento');
+      expect(rows).toEqual([]);
+    });
+
+    it('não vê o cadastro de outro cliente', async () => {
+      const outroCliente = '33333333-3333-4333-8333-333333333333';
+      const { rows } = await comoCliente(outroCliente, 'select id from cliente');
+      expect(rows).toEqual([]);
+    });
+
+    it('LÊ o catálogo, porque precisa dele para escolher', async () => {
+      const outroCliente = '33333333-3333-4333-8333-333333333333';
+      const { rows } = await comoCliente(outroCliente, 'select id from servico');
+      expect(rows.length).toBeGreaterThan(0);
+    });
+
+    it('não escreve no catálogo', async () => {
+      const outroCliente = '33333333-3333-4333-8333-333333333333';
+      await expect(
+        comoCliente(
+          outroCliente,
+          `insert into servico (tenant_id, nome, duracao_min)
+           values ($1, 'servico pirata', 10)`,
+          [tenantA],
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('não encosta na trilha de eventos do estúdio', async () => {
+      const outroCliente = '33333333-3333-4333-8333-333333333333';
+      const { rows } = await comoCliente(outroCliente, 'select id from evento');
+      expect(rows).toEqual([]);
+    });
+  });
+
   it('toda tabela de negócio tem RLS ligada', async () => {
     await cliente.query('reset role');
     const { rows } = await cliente.query<{ tablename: string }>(

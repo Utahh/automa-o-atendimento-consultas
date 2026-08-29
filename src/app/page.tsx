@@ -5,5 +5,8 @@ import { sessaoAtual } from '@/shared/tenancy/sessao';
 export const dynamic = 'force-dynamic';
 
 export default async function Raiz() {
-  redirect((await sessaoAtual()) === null ? '/entrar' : '/hoje');
+  const sessao = await sessaoAtual();
+  if (sessao === null) redirect('/entrar');
+  // Cada papel tem a sua casa: o estudio ve o dia, o cliente ve o proprio horario.
+  redirect(sessao.papel === 'cliente' ? '/cliente' : '/hoje');
 }

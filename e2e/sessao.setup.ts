@@ -1,6 +1,11 @@
 import { test as setup } from '@playwright/test';
 import { COOKIE_DE_SESSAO, criarValorDeSessao } from '../src/shared/tenancy/cookie';
-import { TENANT_DEMO, USUARIO_DEMO } from '../src/shared/db/ids-de-exemplo';
+import {
+  CLIENTE_DEMO,
+  TENANT_DEMO,
+  USUARIO_CLIENTE,
+  USUARIO_DEMO,
+} from '../src/shared/db/ids-de-exemplo';
 
 /**
  * Prepara uma sessao valida antes da bateria de layout.
@@ -19,7 +24,7 @@ setup('cria a sessao de teste', async ({ context }) => {
   }
 
   const valor = criarValorDeSessao(
-    { usuarioId: USUARIO_DEMO, tenantId: TENANT_DEMO, fuso: 'America/Sao_Paulo' },
+    { usuarioId: USUARIO_DEMO, tenantId: TENANT_DEMO, fuso: 'America/Sao_Paulo', papel: 'estudio' },
     segredo,
   );
 
@@ -42,3 +47,38 @@ setup('cria a sessao de teste', async ({ context }) => {
 });
 
 export { ARQUIVO as ARQUIVO_DE_SESSAO };
+
+/**
+ * A segunda sessao: o app do cliente. Papel diferente significa banco
+ * diferente do outro lado — o cliente le so o que e dele.
+ */
+setup('cria a sessao de cliente', async ({ context }) => {
+  const segredo = process.env.SESSAO_SECRET;
+  if (segredo === undefined || segredo === '') {
+    throw new Error('SESSAO_SECRET ausente: os testes de layout precisam dele para entrar.');
+  }
+
+  const valor = criarValorDeSessao(
+    {
+      usuarioId: USUARIO_CLIENTE,
+      tenantId: TENANT_DEMO,
+      fuso: 'America/Sao_Paulo',
+      papel: 'cliente',
+      clienteId: CLIENTE_DEMO,
+    },
+    segredo,
+  );
+
+  await context.addCookies(
+    ['127.0.0.1', 'localhost'].map((domain) => ({
+      name: COOKIE_DE_SESSAO,
+      value: valor,
+      domain,
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax' as const,
+    })),
+  );
+
+  await context.storageState({ path: 'e2e/.sessao-cliente.json' });
+});

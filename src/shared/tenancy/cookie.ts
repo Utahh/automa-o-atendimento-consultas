@@ -13,10 +13,22 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 export const COOKIE_DE_SESSAO = 'kairo_sessao';
 export const DURACAO_DA_SESSAO_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Duas portas, um cookie.
+ *
+ * `estudio` e quem trabalha ali — dono, operador, profissional. `cliente` e o
+ * titular dos dados, que ve so o que e dele (ADR-001). O papel viaja no cookie
+ * porque e ele que decide qual `with*` abre a transacao.
+ */
+export type PapelDaSessao = 'estudio' | 'cliente';
+
 export type Sessao = {
   readonly usuarioId: string;
   readonly tenantId: string;
   readonly fuso: string;
+  readonly papel: PapelDaSessao;
+  /** Preenchido apenas quando o papel e `cliente`. */
+  readonly clienteId?: string;
 };
 
 type Conteudo = Sessao & { readonly exp: number };
@@ -55,5 +67,16 @@ export function lerValorDeSessao(
   if (typeof usuarioId !== 'string' || typeof tenantId !== 'string') return null;
   if (typeof exp !== 'number' || exp <= agora.getTime()) return null;
 
-  return { usuarioId, tenantId, fuso: conteudo.fuso ?? fusoPadrao };
+  const papel: PapelDaSessao = conteudo.papel === 'cliente' ? 'cliente' : 'estudio';
+
+  // Sessao de cliente sem clienteId nao existe: seria um cliente que ve tudo.
+  if (papel === 'cliente' && typeof conteudo.clienteId !== 'string') return null;
+
+  return {
+    usuarioId,
+    tenantId,
+    fuso: conteudo.fuso ?? fusoPadrao,
+    papel,
+    ...(papel === 'cliente' ? { clienteId: conteudo.clienteId as string } : {}),
+  };
 }
