@@ -14,11 +14,15 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 # ── build ───────────────────────────────────────────────────────────────────
+# O worker e empacotado com esbuild, nao compilado com tsc: um arquivo so, com
+# os aliases de caminho ja resolvidos e as dependencias deixadas de fora
+# (elas vem do npm ci do estagio de runtime). tsc continua sendo quem verifica
+# os tipos, no job de qualidade do CI.
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json tsconfig.json tsconfig.worker.json ./
+COPY package.json tsconfig.json ./
 COPY src ./src
-RUN npx tsc -p tsconfig.worker.json
+RUN npm run build:worker
 
 # ── runtime ─────────────────────────────────────────────────────────────────
 FROM base AS runtime
