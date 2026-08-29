@@ -77,15 +77,30 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # A promessa do documento e que, sem segredo, o workflow AVISA e pula —
+      # nao que ele quebra. Um deploy vermelho por falta de configuracao ensina
+      # o time a ignorar deploy vermelho, que e o pior habito possivel.
+      - name: Banco configurado?
+        id: banco
+        env:
+          URL: ${{ secrets.DATABASE_URL }}
+        run: echo "tem=${{ env.URL != '' }}" >> "$GITHUB_OUTPUT"
+
       - name: Aplicar migrations
+        if: steps.banco.outputs.tem == 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run db:migrate
 
       - name: Reaplicar políticas de RLS
+        if: steps.banco.outputs.tem == 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f drizzle/rls.sql
+
+      - name: Sem banco configurado
+        if: steps.banco.outputs.tem != 'true'
+        run: echo "::notice::Sem DATABASE_URL neste ambiente. Migrations puladas."
 
   # ── 2. As duas imagens, com o SHA na tag ──────────────────────────────────
   imagens:
