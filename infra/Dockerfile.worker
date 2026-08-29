@@ -9,9 +9,12 @@ WORKDIR /app
 ENV NODE_ENV=production TZ=America/Sao_Paulo
 
 # ── dependências ────────────────────────────────────────────────────────────
+# Com scripts: o esbuild baixa o proprio binario no postinstall, e sem ele o
+# empacotamento do worker nao roda. No estagio de runtime, abaixo, os scripts
+# continuam desligados — la nao se constroi nada.
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN npm ci
 
 # ── build ───────────────────────────────────────────────────────────────────
 # O worker e empacotado com esbuild, nao compilado com tsc: um arquivo so, com
