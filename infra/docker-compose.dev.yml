@@ -9,7 +9,9 @@ services:
       POSTGRES_DB: kairo
       TZ: America/Sao_Paulo
     ports:
-      - '127.0.0.1:5432:5432'
+      # 55432 de proposito: a maquina de quem desenvolve costuma ja ter um
+      # Postgres na 5432, e o Windows reserva boa parte das portas baixas.
+      - '127.0.0.1:55432:5432'
     volumes:
       - postgres-dev:/var/lib/postgresql/data
     healthcheck:

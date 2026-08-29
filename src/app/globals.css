@@ -1,51 +1,14 @@
 @import 'tailwindcss';
-@import '../shared/ui/z-index.css';
 
-/* ───────────────────────────────────────────────────────────────
-   Tokens. Cor, tipografia e espaço vivem aqui — nunca no componente.
-   ─────────────────────────────────────────────────────────────── */
-@theme {
-  --color-fundo: oklch(98.5% 0.003 250);
-  --color-fundo-2: oklch(96.2% 0.005 250);
-  --color-cartao: oklch(100% 0 0);
-  --color-linha: oklch(90% 0.007 250);
-  --color-tinta: oklch(21% 0.015 255);
-  --color-tinta-2: oklch(47% 0.014 255);
-  --color-tinta-3: oklch(61% 0.012 255);
-  --color-acento: oklch(52% 0.11 195);
-  --color-acento-suave: oklch(94.5% 0.025 195);
-  --color-ok: oklch(52% 0.13 150);
-  --color-perigo: oklch(53% 0.18 27);
+/* B10, passo 1: os tokens vem ANTES de qualquer componente. */
+@import '../shared/ui/tokens/tokens.css';
+@import '../shared/ui/tokens/type.css';
+@import '../shared/ui/tokens/z-index.css';
 
-  --font-sans: 'Inter var', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'JetBrains Mono', monospace;
-
-  /*
-   * Alvo de toque mínimo. WCAG 2.5.8 pede 24; o produto exige 48.
-   *
-   * Em px de propósito: a raiz usa clamp() e cai para 15px em tela estreita —
-   * 3rem viraria 45px justamente onde o dedo tem menos espaço.
-   */
-  --spacing-toque: 48px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema='claro']) {
-    --color-fundo: oklch(14% 0.011 255);
-    --color-fundo-2: oklch(17.5% 0.012 255);
-    --color-cartao: oklch(19.5% 0.013 255);
-    --color-linha: oklch(29% 0.015 255);
-    --color-tinta: oklch(95% 0.006 250);
-    --color-tinta-2: oklch(72% 0.012 252);
-    --color-tinta-3: oklch(57% 0.012 252);
-    --color-acento: oklch(74% 0.12 190);
-    --color-acento-suave: oklch(26% 0.045 195);
-  }
-}
-
-/* ───────────────────────────────────────────────────────────────
-   As dez regras contra texto em cima de texto, na forma de CSS.
-   ─────────────────────────────────────────────────────────────── */
+/*
+ * As dez regras contra texto em cima de texto, na forma de CSS.
+ * O que da para resolver aqui nao precisa de disciplina de quem escreve a tela.
+ */
 @layer base {
   *,
   *::before,
@@ -54,7 +17,7 @@
   }
 
   html {
-    /* Tipografia com clamp: nunca um tamanho fixo. */
+    /* Regra 6: tipografia com clamp, nunca tamanho fixo. */
     font-size: clamp(15px, 0.9rem + 0.2vw, 17px);
     -webkit-text-size-adjust: 100%;
   }
@@ -62,30 +25,24 @@
   body {
     margin: 0;
     min-height: 100dvh;
-    background: var(--color-fundo);
-    color: var(--color-tinta);
-    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans), 'Inter fallback', sans-serif;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
-    /* O corpo NUNCA rola na horizontal. Conteúdo largo rola dentro de si. */
+    /* Regra 7: o corpo NUNCA rola na horizontal. */
     overflow-x: clip;
   }
 
   h1,
   h2,
   h3,
-  h4 {
-    /* Sem quebra órfã e sem título de uma palavra na segunda linha. */
-    text-wrap: balance;
-    margin: 0;
-  }
-
+  h4,
   p {
-    text-wrap: pretty;
     margin: 0;
   }
 
-  /* Regra 3: a causa nº 1 de estouro horizontal. */
+  /* Regra 3: a causa no 1 de estouro horizontal. */
   .flex > *,
   .grid > * {
     min-width: 0;
@@ -98,11 +55,13 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-acento);
+    outline: 2px solid var(--color-brand-vivid);
     outline-offset: 3px;
     border-radius: 4px;
   }
 
+  /* Movimento existe para explicar de onde uma coisa veio. Nada anima so
+     para ser bonito — e quem pede menos movimento recebe menos movimento. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -128,36 +87,49 @@
     min-width: 0;
   }
 
-  /* Regra 7: todo conteúdo largo dentro do próprio scroller. */
+  /* Regra 7: todo conteudo largo dentro do proprio scroller. */
   .rolagem-x {
     overflow-x: auto;
     overscroll-behavior-x: contain;
   }
 
-  /* Rolagem presa em seções longas fora da tela. */
+  /* Rolagem presa em secoes longas fora da tela. */
   .secao-longa {
     content-visibility: auto;
     contain-intrinsic-size: auto 500px;
   }
 
-  /* Alvo de toque: requisito, não cortesia. */
+  /* Alvo de toque: requisito, nao cortesia. */
   .alvo-toque {
     min-height: var(--spacing-toque);
     min-width: var(--spacing-toque);
   }
 
-  /* Só transform e opacity. Nunca width, top, height. */
+  /* So transform e opacity. Nunca width, top, height. Maximo de 150 ms. */
   .anima-entrada {
-    animation: entrada 160ms ease-out;
+    animation: entrada 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .anima-subida {
+    animation: subida 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @keyframes entrada {
     from {
       opacity: 0;
-      transform: translateY(6px);
+      transform: translateY(4px);
     }
     to {
       opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes subida {
+    from {
+      transform: translateY(100%);
+    }
+    to {
       transform: none;
     }
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { slotsLivres, type Intervalo } from './disponibilidade';
+import { slotsLivres, unirIntervalos, type Intervalo } from './disponibilidade';
 
 const dia = (hhmm: string) => new Date(`2026-03-10T${hhmm}:00.000Z`);
 const faixa = (de: string, ate: string): Intervalo => ({ inicio: dia(de), fim: dia(ate) });
@@ -124,5 +124,56 @@ describe('slotsLivres', () => {
     expect(d.contem(dia('12:00'))).toBe(false);
     expect(d.contem(dia('13:00'))).toBe(false);
     expect(d.contem(dia('14:00'))).toBe(true);
+  });
+});
+
+describe('unirIntervalos', () => {
+  it('junta o que se sobrepoe', () => {
+    const r = unirIntervalos([faixa('09:00', '11:00'), faixa('10:00', '12:00')]);
+    expect(r).toEqual([faixa('09:00', '12:00')]);
+  });
+
+  it('junta o que so se encosta', () => {
+    const r = unirIntervalos([faixa('09:00', '10:00'), faixa('10:00', '11:00')]);
+    expect(r).toEqual([faixa('09:00', '11:00')]);
+  });
+
+  it('mantem separado o que tem buraco', () => {
+    const r = unirIntervalos([faixa('09:00', '10:00'), faixa('11:00', '12:00')]);
+    expect(r).toHaveLength(2);
+  });
+
+  it('descarta intervalo invertido em vez de gerar grade maluca', () => {
+    expect(unirIntervalos([faixa('12:00', '09:00')])).toEqual([]);
+  });
+});
+
+describe('janela somada a jornada', () => {
+  it('nao repete horario quando a janela cai dentro do expediente', () => {
+    const d = slotsLivres({
+      jornada: [faixa('09:00', '12:00'), faixa('10:00', '11:00')],
+      ocupados: [],
+      duracaoMin: 60,
+      passoMin: 60,
+      agora: dia('08:00'),
+    });
+
+    expect(d.slots.map((s) => s.inicio.toISOString())).toEqual([
+      dia('09:00').toISOString(),
+      dia('10:00').toISOString(),
+      dia('11:00').toISOString(),
+    ]);
+  });
+
+  it('estende o dia quando a janela vai alem do expediente', () => {
+    const d = slotsLivres({
+      jornada: [faixa('09:00', '12:00'), faixa('12:00', '13:00')],
+      ocupados: [],
+      duracaoMin: 60,
+      passoMin: 60,
+      agora: dia('08:00'),
+    });
+
+    expect(d.contem(dia('12:00'))).toBe(true);
   });
 });

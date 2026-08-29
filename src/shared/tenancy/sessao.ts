@@ -1,44 +1,68 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { NaoAutenticado } from '../erros';
-import { FUSO_PADRAO } from '../config/env';
+import { NaoAutenticado, NaoAutorizado } from '../erros';
+import { env, FUSO_PADRAO } from '../config/env';
+import {
+  COOKIE_DE_SESSAO,
+  DURACAO_DA_SESSAO_MS,
+  criarValorDeSessao,
+  lerValorDeSessao,
+  type PapelDaSessao,
+  type Sessao,
+} from './cookie';
 
 /**
- * A identidade da porta de escrita. Sprint 1 troca este cookie por sessão
- * assinada com prazo absoluto; a assinatura desta função não muda.
+ * A identidade da porta de escrita: cookie assinado, httpOnly, sameSite=lax,
+ * com prazo absoluto. A assinatura em si vive em `cookie.ts`.
  */
-export type Sessao = {
-  readonly tenantId: string;
-  readonly usuarioId: string;
-  readonly fuso: string;
-};
+export type { Sessao, PapelDaSessao };
 
-const COOKIE = 'kairo_sessao';
+export type SessaoDeCliente = Sessao & { readonly papel: 'cliente'; readonly clienteId: string };
 
-export async function sessaoAtual(): Promise<Sessao | null> {
-  const jar = await cookies();
-  const bruto = jar.get(COOKIE)?.value;
-  if (bruto === undefined) return null;
-
-  try {
-    const dados = JSON.parse(
-      Buffer.from(bruto, 'base64url').toString('utf8'),
-    ) as Partial<Sessao> | null;
-    if (dados === null || typeof dados.tenantId !== 'string' || typeof dados.usuarioId !== 'string')
-      return null;
-    return {
-      tenantId: dados.tenantId,
-      usuarioId: dados.usuarioId,
-      fuso: dados.fuso ?? FUSO_PADRAO,
-    };
-  } catch {
-    return null;
-  }
+function segredo(): string {
+  const s = env().SESSAO_SECRET;
+  if (s === undefined) throw new Error('SESSAO_SECRET ausente. Gere com: openssl rand -base64 32');
+  return s;
 }
 
-/** Usado por toda action: sem sessão, nada acontece. */
+export async function sessaoAtual(): Promise<Sessao | null> {
+  const bruto = (await cookies()).get(COOKIE_DE_SESSAO)?.value;
+  return bruto === undefined ? null : lerValorDeSessao(bruto, segredo(), FUSO_PADRAO);
+}
+
+/** Usada por toda action: sem sessao, nada acontece. */
 export async function exigirSessao(): Promise<Sessao> {
   const s = await sessaoAtual();
   if (s === null) throw new NaoAutenticado();
   return s;
+}
+
+/** A porta do estudio: dono, operador ou profissional. */
+export async function exigirSessaoDoEstudio(): Promise<Sessao> {
+  const s = await exigirSessao();
+  if (s.papel !== 'estudio') throw new NaoAutorizado('a area do estudio');
+  return s;
+}
+
+/** A porta do cliente. Sem clienteId nao ha sessao de cliente. */
+export async function exigirSessaoDeCliente(): Promise<SessaoDeCliente> {
+  const s = await exigirSessao();
+  if (s.papel !== 'cliente' || s.clienteId === undefined) {
+    throw new NaoAutorizado('a area do cliente');
+  }
+  return { ...s, papel: 'cliente', clienteId: s.clienteId };
+}
+
+export async function gravarSessao(sessao: Sessao): Promise<void> {
+  (await cookies()).set(COOKIE_DE_SESSAO, criarValorDeSessao(sessao, segredo()), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: env().NODE_ENV === 'production',
+    path: '/',
+    maxAge: DURACAO_DA_SESSAO_MS / 1000,
+  });
+}
+
+export async function encerrarSessao(): Promise<void> {
+  (await cookies()).delete(COOKIE_DE_SESSAO);
 }

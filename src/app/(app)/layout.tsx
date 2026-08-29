@@ -1,35 +1,19 @@
-import { textos } from '@/shared/i18n';
-import { Faixa, OverlayProvider } from '@/shared/ui';
-import { BarraDeNavegacao } from './barra-de-navegacao';
+import { redirect } from 'next/navigation';
+import { AppShell } from '@/shared/ui/layout/AppShell';
+import { sessaoAtual } from '@/shared/tenancy/sessao';
 
 /**
- * A casca da área logada.
+ * A guarda da area do estudio.
  *
- * A ordem aqui é a ordem das camadas: faixa de aviso NO FLUXO (empurra o
- * conteúdo), conteúdo, e a barra de navegação em z 20.
+ * Nao basta ter sessao: precisa ser sessao DE ESTUDIO. Cliente com conta
+ * existe dentro do mesmo tenant (ADR-001), e sem esta linha ele abriria a
+ * agenda inteira so digitando o endereco. O banco ainda barraria a leitura,
+ * mas a tela nao deveria nem existir para ele.
  */
-export default function LayoutDoApp({ children }: { children: React.ReactNode }) {
-  const canalDesconectado = false;
+export default async function LayoutDoApp({ children }: { children: React.ReactNode }) {
+  const sessao = await sessaoAtual();
+  if (sessao === null) redirect('/entrar');
+  if (sessao.papel !== 'estudio') redirect('/cliente');
 
-  return (
-    <OverlayProvider>
-      {/* A partir de 1024 px a navegação vira barra lateral fixa: o conteúdo
-          recua o mesmo tanto, senão a barra passa por cima do texto. */}
-      <div className="flex min-h-dvh flex-col lg:pl-56">
-        {canalDesconectado ? (
-          <Faixa
-            tom="atencao"
-            titulo={textos.estados.canalDesconectado}
-            acao={{ rotulo: textos.estados.canalDesconectadoAcao, href: '/conta' }}
-          />
-        ) : null}
-
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-4 pb-24 md:px-6 lg:pb-8">
-          {children}
-        </main>
-
-        <BarraDeNavegacao />
-      </div>
-    </OverlayProvider>
-  );
+  return <AppShell>{children}</AppShell>;
 }

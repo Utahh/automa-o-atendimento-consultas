@@ -21,10 +21,11 @@ numa VPS, com `/healthz` próprio (`src/workers/`).
 ```
 src/
 ├── app/                              # ROTAS — só composição, zero regra
-│   ├── (app)/layout.tsx              # casca + <div id="overlays">
-│   ├── (app)/{hoje,agenda,clientes,conversas,financeiro,automacoes,conta}/
+│   ├── (app)/layout.tsx              # a casca (AppShell)
+│   ├── (app)/{hoje,agenda,clientes,conversas,servicos,financeiro,automacoes,conta}/
 │   ├── p/[slug]/                     # página pública, sem login
-│   └── api/webhooks/*                # só valida assinatura e enfileira
+│   ├── api/webhooks/canal/           # só valida assinatura, grava cru e enfileira
+│   └── api/healthz/
 │
 ├── modules/                          # UMA PASTA POR FUNCIONALIDADE
 │   └── agenda/
@@ -32,21 +33,35 @@ src/
 │       ├── domain/{transicoes,jornada}.ts
 │       ├── application/criar-agendamento.ts
 │       ├── infra/agendamento.repo.ts
-│       ├── ui/{agenda-do-dia,chip-de-horario}.tsx
+│       ├── ui/{AgendaDia,SlotChip,SheetNovoAgendamento,AcoesDaAgenda}.tsx
 │       ├── actions.ts                # fronteira: autentica, autoriza, valida
 │       ├── schemas.ts                # Zod — o contrato com o front
 │       └── index.ts                  # ÚNICA porta de saída do módulo
 │
 ├── shared/                           # INFRA — não conhece negócio
-│   ├── db/{client.ts,schema/,tx.ts}  # withTenant()
-│   ├── fila/{boss,jobs}.ts
-│   ├── ui/                           # primitivos sem domínio
-│   ├── i18n/pt-BR.ts                 # TODO texto de interface mora aqui
-│   └── erros/{app-error,resultado}.ts
+│   ├── db/{client,tx,eventos,schema/}      # withTenant()
+│   ├── fila/{boss,jobs}.ts                 # pg-boss, com a guarda do pooler
+│   ├── tenancy/{sessao,ator}.ts
+│   ├── config/{brand,env}.ts               # o nome da marca vive aqui
+│   ├── i18n/pt-BR.ts                       # TODO texto de interface
+│   ├── erros/{resultado,dominio,app-error}.ts
+│   └── ui/
+│       ├── tokens/{tokens,type,z-index}.css   # antes de qualquer componente
+│       ├── layout/{AppShell,Page,Stack,Cluster,Grid}.tsx
+│       ├── nav/{BottomNav,SideNav,NavItem,MenuSuspenso}.tsx
+│       ├── overlay/{Portal,Scrim,Sheet,Toast}.tsx
+│       ├── data/{Skeleton,EmptyState,List}.tsx
+│       ├── feedback/{Banner,StatusBadge,ErrorState,OfflineBanner}.tsx
+│       ├── form/{Field,Input,Chip}.tsx
+│       └── primitives/{Button,Card,Divider,Logo}.tsx
 │
 └── workers/                          # SEGUNDO RUNTIME
     └── {index,heartbeat}.ts · handlers/
 ```
+
+**A regra que evita a pasta-lixo:** um componente só entra em `shared/ui`
+quando é usado por **dois módulos diferentes**. Até lá, mora no módulo onde
+nasceu.
 
 ## O padrão de caso de uso
 
@@ -76,13 +91,43 @@ Referência viva: [`criar-agendamento.ts`](../src/modules/agenda/application/cri
 | **Webhook**       | Nenhuma                 | Valida assinatura, grava cru, enfileira. Nada mais                                           |
 | **Job**           | `withSystemTenant()`    | Revalida automação, consentimento, canal, janela de silêncio e limite antes de agir          |
 
+## O schema, com as seis tabelas que faltavam
+
+`jornada_trabalho`, `bloqueio`, `servico_recurso`, `local`, `automacao` e
+`webhook_recebido` estavam sendo usadas e nunca criadas. Sem elas a função de
+disponibilidade não tem de onde ler o expediente, e a Sprint 1 trava no
+terceiro dia. Todas entram na primeira migration.
+
+`webhook_recebido` é a única sem `tenant_id`: o roteamento por número acontece
+depois, no worker — a rota só valida a assinatura, grava cru e enfileira.
+
 ## Isolamento entre clientes
 
 `withTenant()` abre a transação e fixa `app.tenant_id` nela. As políticas de RLS
 (`drizzle/rls.sql`) leem esse valor. Consulta fora de `withTenant()` não enxerga
 linha nenhuma — o isolamento não depende de alguém lembrar do `where`.
 
+Query fora de `withTenant()` **falha**, em vez de devolver zero linhas em
+silêncio: `app_tenant_id()` levanta exceção quando a variável de sessão está
+vazia. Silêncio parece funcionamento normal e vira bug de produção meses
+depois; exceção aparece no primeiro teste.
+
+Os testes rodam como `kairo_app`, um papel **NOSUPERUSER e NOBYPASSRLS** —
+rodar como dono do banco esconde exatamente a falha que eles existem para
+pegar. Ver [`isolamento.integration.test.ts`](../src/shared/db/isolamento.integration.test.ts).
+
 O CI reprova qualquer tabela de negócio sem `rowsecurity`.
+
+### As três armadilhas conhecidas
+
+1. A política de RLS de `membro` **não pode** usar uma função que lê `membro`:
+   recursão infinita que só aparece em produção. Toda política compara direto
+   com `app_tenant_id()`, que lê apenas uma variável de sessão.
+2. O pg-boss atrás de um pooler em **modo transação** para de funcionar sem
+   erro. `conferirUrlDaFila()` derruba o worker no boot se a URL estiver
+   errada.
+3. Toda função com cache recebe o `tenantId` como argumento **explícito**. Um
+   `tenantId` implícito serve o catálogo de um cliente para outro.
 
 ## Web e app: um código só
 

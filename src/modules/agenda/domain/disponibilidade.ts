@@ -50,6 +50,33 @@ function expandir(i: Intervalo, folgaMin: number): Intervalo {
   };
 }
 
+/**
+ * Une intervalos que se sobrepoem ou se encostam.
+ *
+ * A jornada de um dia pode vir de duas fontes — o expediente que se repete e
+ * as janelas que o profissional abriu. Sem unir, um horario dentro das duas
+ * apareceria duas vezes na grade.
+ */
+export function unirIntervalos(intervalos: readonly Intervalo[]): readonly Intervalo[] {
+  const ordenados = [...intervalos]
+    .filter((i) => i.fim.getTime() > i.inicio.getTime())
+    .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+
+  const unidos: Intervalo[] = [];
+  for (const atual of ordenados) {
+    const ultimo = unidos.at(-1);
+    if (ultimo !== undefined && atual.inicio.getTime() <= ultimo.fim.getTime()) {
+      if (atual.fim.getTime() > ultimo.fim.getTime()) {
+        unidos[unidos.length - 1] = { inicio: ultimo.inicio, fim: atual.fim };
+      }
+      continue;
+    }
+    unidos.push(atual);
+  }
+
+  return unidos;
+}
+
 export function slotsLivres(p: ParametrosDeDisponibilidade): Disponibilidade {
   const duracao = p.duracaoMin * MINUTO;
   const passo = (p.passoMin ?? 15) * MINUTO;
@@ -61,7 +88,8 @@ export function slotsLivres(p: ParametrosDeDisponibilidade): Disponibilidade {
   const bloqueados = p.ocupados.map((o) => expandir(o, folga));
   const livres: Intervalo[] = [];
 
-  for (const janela of p.jornada) {
+  // Jornada e janelas chegam juntas: unir evita horario repetido na grade.
+  for (const janela of unirIntervalos(p.jornada)) {
     const limite = janela.fim.getTime();
     for (let t = janela.inicio.getTime(); t + duracao <= limite; t += passo) {
       if (t < naoAntesDe) continue;

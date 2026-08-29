@@ -15,7 +15,7 @@ import { join, relative, sep } from 'node:path';
 
 const RAIZ = process.cwd();
 const FONTE = join(RAIZ, 'src');
-const ARQUIVO_DA_ESCALA = join('src', 'shared', 'ui', 'z-index.css');
+const ARQUIVO_DA_ESCALA = join('src', 'shared', 'ui', 'tokens', 'z-index.css');
 
 const problemas = [];
 
@@ -38,7 +38,7 @@ const REGRAS = [
     nome: 'z-index fora da escala',
     aplica: (caminho) => !relative(RAIZ, caminho).endsWith(ARQUIVO_DA_ESCALA),
     padrao: /(?:^|[^-\w])z-index\s*:\s*(?!var\(--z-)[^;]+|className=["'][^"']*\bz-(?:\[|\d)/,
-    dica: 'Use uma classe da escala (camada-fluxo … camada-aviso) ou a variável --z-*.',
+    dica: 'Use uma classe da escala (camada-base … camada-aviso) ou a variavel --z-*.',
   },
   {
     nome: 'biblioteca de data no cliente',
@@ -55,7 +55,17 @@ const REGRAS = [
   },
 ];
 
-const TEXTO_LITERAL = />([^<>{}]*\p{L}{2,}[^<>{}]*)</u;
+// O `(?<![=-])` evita confundir a seta de funcao com abertura de texto JSX:
+// `=> Promise<T>` nao e texto na tela.
+const TEXTO_LITERAL = /(?<![=-])>([^<>{}]*\p{L}{2,}[^<>{}]*)</u;
+
+/**
+ * O nome da marca vive em UM arquivo. Trocar a marca deve custar um
+ * find-and-replace em brand.ts, nao um redesenho — e "Kairo" e nome de
+ * trabalho, ainda pendente de busca no INPI.
+ */
+const NOME_DA_MARCA = /Kairo/;
+const ARQUIVO_DA_MARCA = join('src', 'shared', 'config', 'brand.ts');
 
 for (const caminho of await arquivos(FONTE)) {
   const conteudo = readFileSync(caminho, 'utf8');
@@ -70,6 +80,16 @@ for (const caminho of await arquivos(FONTE)) {
       if (!regra.aplica(caminho)) continue;
       if (regra.contexto === 'cliente' && !ehCliente) continue;
       if (regra.padrao.test(semComentario)) reportar(caminho, numero, regra.nome, regra.dica);
+    }
+
+    // Nome da marca fora de brand.ts.
+    if (!relative(RAIZ, caminho).endsWith(ARQUIVO_DA_MARCA) && NOME_DA_MARCA.test(semComentario)) {
+      reportar(
+        caminho,
+        numero,
+        'nome da marca fora de brand.ts',
+        'Use `brand.name`. O nome e de trabalho e vive num arquivo so.',
+      );
     }
 
     // Texto literal em JSX — fora de comentários e de arquivos de i18n.

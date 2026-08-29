@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 70" width="128" height="140" role="img" aria-label="Kairo">
+  <g transform="translate(20 4)">
+    <circle cx="12" cy="12" r="9" fill="none" stroke="#FFFFFF" stroke-width="2.4"></circle>
+    <path d="M12 12V1.8A10.2 10.2 0 0 1 22.2 12H12Z" fill="#FFFFFF"></path>
+  </g>
+  <text x="32" y="56" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="600" letter-spacing="-0.44" fill="#FFFFFF">kairo</text>
+</svg>

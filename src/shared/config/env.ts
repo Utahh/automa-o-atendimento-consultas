@@ -19,6 +19,12 @@ const esquema = z.object({
   IA_MODELO_FALLBACK: z.string().default('claude-haiku-4-5-20251001'),
   WORKER_PORT: z.coerce.number().int().positive().default(3001),
   WORKER_CONCORRENCIA: z.coerce.number().int().positive().default(4),
+
+  // Opcionais, todos com plano gratuito. Sem eles o produto roda: o codigo de
+  // acesso sai pelo log, e nada de terceiro precisa existir para testar.
+  RESEND_API_KEY: z.string().optional(),
+  SENTRY_DSN: z.string().optional(),
+  POSTHOG_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof esquema>;

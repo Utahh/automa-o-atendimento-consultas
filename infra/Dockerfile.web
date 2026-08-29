@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# O web. Next.js em modo standalone, num processo Node comum.
+#
+# NAO vai para a Vercel: o plano Hobby proibe uso comercial, e conta pausada
+# no meio do piloto com cliente pagando e o tipo de risco que nao se corre
+# para economizar US$ 20. App e worker moram na mesma VPS, sob Coolify.
+# ---------------------------------------------------------------------------
+FROM node:22-alpine AS base
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1 TZ=America/Sao_Paulo
+
+FROM base AS deps
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+
+FROM base AS build
+ENV NODE_ENV=production BUILD_STANDALONE=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM base AS runtime
+ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
+RUN apk add --no-cache curl tini
+
+COPY --from=build /app/public ./public
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+
+USER node
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3   CMD curl -fsS http://127.0.0.1:3000/api/healthz || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "server.js"]

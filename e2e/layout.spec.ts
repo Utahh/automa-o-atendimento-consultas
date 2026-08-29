@@ -11,7 +11,18 @@ import { alvosPequenos, colisoesDeTexto, estouroHorizontal } from './utils/layou
 
 const VIEWPORTS = [320, 360, 768, 1024, 1440] as const;
 
-const ROTAS = ['/hoje', '/agenda', '/clientes', '/conversas', '/financeiro', '/conta', '/p/demo'];
+const ROTAS = [
+  '/hoje',
+  '/agenda',
+  '/agenda/semana',
+  '/clientes',
+  '/conversas',
+  '/servicos',
+  '/financeiro',
+  '/automacoes',
+  '/conta',
+  '/p/demo',
+];
 
 for (const largura of VIEWPORTS) {
   for (const rota of ROTAS) {
@@ -19,6 +30,10 @@ for (const largura of VIEWPORTS) {
       await page.setViewportSize({ width: largura, height: 800 });
       await page.goto(rota);
       await page.waitForLoadState('networkidle');
+
+      // Sem isto, uma sessao invalida redireciona tudo para /entrar e a suite
+      // fica verde medindo a tela errada.
+      expect(new URL(page.url()).pathname).toBe(rota);
 
       // 1. o corpo nunca rola na horizontal
       expect(await page.evaluate(estouroHorizontal)).toBeLessThanOrEqual(1);
@@ -32,12 +47,16 @@ for (const largura of VIEWPORTS) {
   }
 }
 
-test('zoom de 200% continua sem estouro horizontal', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 800 });
-  await page.goto('/hoje');
-  // 200% de zoom em 640 px lógicos é o equivalente a 320 px de conteúdo.
-  await page.evaluate(() => {
-    document.documentElement.style.fontSize = '200%';
+// Zoom de 200% em 320 px e requisito (WCAG 1.4.4), nao cortesia — e e onde a
+// agenda cheia estoura primeiro: chip de horario, nome e etiqueta de estado
+// disputam a mesma linha.
+for (const rota of ['/hoje', '/agenda', '/p/demo']) {
+  test(rota + ' com zoom de 200% continua sem estouro horizontal', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto(rota);
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+    });
+    expect(await page.evaluate(estouroHorizontal)).toBeLessThanOrEqual(1);
   });
-  expect(await page.evaluate(estouroHorizontal)).toBeLessThanOrEqual(1);
-});
+}

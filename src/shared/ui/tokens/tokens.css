@@ -1,0 +1,86 @@
+/*
+ * Tokens de cor — a paleta da marca.
+ *
+ * Azul manda; areia respira; grafite fala. Nenhum componente usa cor literal:
+ * e por isso que trocar a marca inteira e editar este arquivo.
+ *
+ * O azul da marca e o que MENOS aparece (6% de uma peca institucional) — cor
+ * de acao usada o tempo todo deixa de sinalizar acao.
+ */
+@theme {
+  --color-bg: oklch(98.5% 0.003 250); /* Papel      #F9FAFC */
+  --color-surface: oklch(100% 0 0); /* Branco     #FFFFFF */
+  --color-surface-2: oklch(96.5% 0.005 250);
+  --color-sand: oklch(91.2% 0.028 78); /* Areia      #ECE0CE */
+  --color-sand-dark: oklch(75.5% 0.045 74); /* Areia escura #C1AC90 */
+  --color-border: oklch(91% 0.006 250);
+  --color-fg: oklch(29% 0.014 250); /* Grafite    #262C32 — 13,5:1 */
+  --color-fg-muted: oklch(52% 0.014 250); /* Grafite claro #636A71 — 5,3:1 */
+  --color-brand: oklch(47.5% 0.115 247); /* Azul Kairo #146099 */
+  --color-brand-fg: oklch(99% 0.005 247);
+  --color-brand-vivid: oklch(58.5% 0.125 245); /* Azul vivo  #2D82C0 */
+  --color-brand-subtle: oklch(93.5% 0.028 245); /* Nevoa      #DBECFC */
+  --color-night: oklch(26.5% 0.055 248); /* Azul-noite #0C273E */
+
+  /* Estado — reservadas. Nunca decorativas, nunca sem rotulo ao lado. */
+  --color-success: oklch(51.5% 0.128 155); /* Confirmado #007C45 */
+  --color-warning: oklch(54.5% 0.112 68); /* Aguardando #9A6215 */
+  --color-danger: oklch(54% 0.18 27); /* Falta/erro #C1332F */
+
+  /*
+   * Alvo de toque minimo. Em px de proposito: a raiz usa clamp() e cai para
+   * 15px em tela estreita — 3rem viraria 45px justamente onde o dedo tem
+   * menos espaco. O produto exige 48, acima do minimo de 44.
+   */
+  --spacing-toque: 48px;
+
+  --breakpoint-sm: 24rem; /* 384px  celular grande        */
+  --breakpoint-md: 48rem; /* 768px  tablet, 2 colunas     */
+  --breakpoint-lg: 64rem; /* 1024px desktop, nav lateral  */
+  --breakpoint-xl: 80rem; /* 1280px 3a coluna opcional    */
+}
+
+/* Tema escuro por preferencia do sistema. Nao e inversao automatica: cada
+   valor foi escolhido contra o fundo escuro. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: oklch(18.5% 0.02 248);
+    --color-surface: oklch(22.5% 0.022 248);
+    --color-surface-2: oklch(27% 0.022 248);
+    --color-sand: oklch(80% 0.04 76);
+    --color-sand-dark: oklch(66% 0.045 74);
+    --color-border: oklch(33% 0.02 248);
+    --color-fg: oklch(95.5% 0.006 250);
+    --color-fg-muted: oklch(72% 0.014 250);
+    --color-brand: oklch(73% 0.11 243);
+    --color-brand-fg: oklch(18.5% 0.02 248);
+    --color-brand-vivid: oklch(78% 0.105 243);
+    --color-brand-subtle: oklch(31% 0.045 246);
+    --color-night: oklch(14% 0.018 248);
+    --color-success: oklch(72% 0.14 155);
+    --color-warning: oklch(80% 0.125 72);
+    --color-danger: oklch(69% 0.16 27);
+  }
+}
+
+/* Escolha explicita de escuro — mesmos valores, escritos por extenso.
+   Sem este bloco, quem usa sistema claro e escolhe escuro no app nao recebe
+   tema nenhum. */
+:root[data-theme='dark'] {
+  --color-bg: oklch(18.5% 0.02 248);
+  --color-surface: oklch(22.5% 0.022 248);
+  --color-surface-2: oklch(27% 0.022 248);
+  --color-sand: oklch(80% 0.04 76);
+  --color-sand-dark: oklch(66% 0.045 74);
+  --color-border: oklch(33% 0.02 248);
+  --color-fg: oklch(95.5% 0.006 250);
+  --color-fg-muted: oklch(72% 0.014 250);
+  --color-brand: oklch(73% 0.11 243);
+  --color-brand-fg: oklch(18.5% 0.02 248);
+  --color-brand-vivid: oklch(78% 0.105 243);
+  --color-brand-subtle: oklch(31% 0.045 246);
+  --color-night: oklch(14% 0.018 248);
+  --color-success: oklch(72% 0.14 155);
+  --color-warning: oklch(80% 0.125 72);
+  --color-danger: oklch(69% 0.16 27);
+}

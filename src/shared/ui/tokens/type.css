@@ -1,0 +1,66 @@
+/*
+ * Tipografia.
+ *
+ * Escala fixa, sem tamanhos avulsos: 12 · 14 · 16 · 18 · 22 · 28 · 36.
+ * Nenhum titulo em tamanho fixo — clamp() sempre (regra 6 do anti-sobreposicao).
+ */
+@theme {
+  --font-sans:
+    'Inter', 'Inter var', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Digitos de largura fixa: horario e dinheiro alinham em coluna. */
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --text-xs: 0.75rem; /* 12 */
+  --text-sm: 0.875rem; /* 14 */
+  --text-base: 1rem; /* 16 */
+  --text-lg: 1.125rem; /* 18 */
+  --text-xl: 1.375rem; /* 22 */
+  --text-2xl: 1.75rem; /* 28 */
+  --text-3xl: 2.25rem; /* 36 */
+}
+
+@layer base {
+  /*
+   * size-adjust no fallback: a troca de fonte nao muda a altura da linha, e
+   * o layout nao salta (CLS < 0,1).
+   */
+  @font-face {
+    font-family: 'Inter fallback';
+    src: local('Arial');
+    size-adjust: 107%;
+    ascent-override: 90%;
+    descent-override: 22%;
+    line-gap-override: 0%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+    /* Linha de texto corrido em torno de 65 caracteres. */
+    max-inline-size: 65ch;
+  }
+}
+
+@layer utilities {
+  /* Rotulo em caixa alta sempre com entreletra: sem ela, fecha e some. */
+  .rotulo {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  /* Titulo fluido — nenhum tamanho fixo. */
+  .titulo-tela {
+    font-size: clamp(1.375rem, 1.2rem + 0.9vw, 1.75rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+}

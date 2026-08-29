@@ -1,27 +1,46 @@
 /**
- * A ÚNICA porta de saída do módulo. Quem está de fora importa daqui — nunca de
- * `domain/`, `application/` ou `infra/`. A regra é lint, não combinado.
+ * A UNICA porta de saida do modulo.
+ *
+ * Quem esta de fora importa daqui — nunca de `domain/`, `application/` ou
+ * `infra/`. Importar o caminho interno de um irmao e erro de lint: ou vira
+ * exportacao explicita, ou o limite entre os dois modulos esta errado.
  */
 export { criarAgendamentoAction } from './actions';
+export { consultarAgendaDoDia } from './consultas';
+export type { AgendaDoDia } from './consultas';
+export type { OpcoesDeAgendamento } from './application/opcoes-de-agendamento';
+
 export {
   criarAgendamentoSchema,
-  remarcarAgendamentoSchema,
+  remarcarSchema,
   mudarStatusSchema,
   consultarDisponibilidadeSchema,
   agendamentoDaTelaSchema,
   slotSchema,
-  CODIGOS_DE_ERRO,
 } from './schemas';
 export type {
   CriarAgendamento,
-  RemarcarAgendamento,
+  Remarcar,
   MudarStatus,
   ConsultarDisponibilidade,
   AgendamentoDaTela,
   Slot,
-  CodigoDeErroDaAgenda,
 } from './schemas';
-export { STATUS, podeIrPara, ocupaAgenda } from './domain/transicoes';
+
+export { AgendaDia } from './ui/AgendaDia';
+export { SlotChip } from './ui/SlotChip';
+export { SheetNovoAgendamento, BotaoNovoAgendamento } from './ui/SheetNovoAgendamento';
+export { AcoesDaAgenda } from './ui/AcoesDaAgenda';
+export type { Opcao } from './ui/SheetNovoAgendamento';
+
+export { slotsLivres, unirIntervalos } from './domain/disponibilidade';
+export { podeFazerCheckin, janelaDeCheckin } from './domain/checkin';
+export { criarAgendamento } from './application/criar-agendamento';
+export { fazerCheckin } from './application/fazer-checkin';
+export { cancelarAgendamento } from './application/cancelar-agendamento';
+export { abrirJanela } from './application/abrir-janela';
+export type { Intervalo, Disponibilidade } from './domain/disponibilidade';
+export { STATUS, podeIrPara, ocupaAgenda, ehFinal } from './domain/transicoes';
 export type { Status } from './domain/transicoes';
-export { AgendaDoDia } from './ui/agenda-do-dia';
-export { ChipDeHorario } from './ui/chip-de-horario';
+export { janelasDoDia, formatarHora, formatarDia, diaDaSemanaDe } from './domain/jornada';
+export type { FaixaDeJornada } from './domain/jornada';
