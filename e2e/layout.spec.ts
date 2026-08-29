@@ -31,6 +31,10 @@ for (const largura of VIEWPORTS) {
       await page.goto(rota);
       await page.waitForLoadState('networkidle');
 
+      // Sem isto, uma sessao invalida redireciona tudo para /entrar e a suite
+      // fica verde medindo a tela errada.
+      expect(new URL(page.url()).pathname).toBe(rota);
+
       // 1. o corpo nunca rola na horizontal
       expect(await page.evaluate(estouroHorizontal)).toBeLessThanOrEqual(1);
 

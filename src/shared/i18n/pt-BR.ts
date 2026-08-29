@@ -87,6 +87,7 @@ export const textos = {
     quando: 'Quando',
     recentes: 'Recentes',
     maisUsados: 'Mais usados',
+    proximoDiaComVaga: 'Próximo dia com vaga: ',
     semHorarioLivre: 'Sem horário livre neste dia.',
     semHorarioLivreAcao: 'Escolha outro dia ou ajuste a jornada em Conta › Horários.',
     rascunhoPerdido: 'O rascunho não foi salvo — o app fechou antes.',
@@ -99,6 +100,26 @@ export const textos = {
     atendido: 'Atendido',
     cancelado: 'Cancelado',
     faltou: 'Faltou',
+  },
+
+  entrar: {
+    titulo: 'Entrar',
+    email: 'Seu e-mail',
+    dicaEmail: 'Mandamos um código de 6 dígitos.',
+    pedirCodigo: 'Receber código',
+    codigo: 'Código',
+    dicaCodigo: 'Vale por 10 minutos.',
+    enviadoPara: 'Enviamos um código para',
+    entrar: 'Entrar',
+    sair: 'Sair',
+    /* Cada recusa diz o que fazer em seguida — nunca só "código inválido". */
+    recusa: {
+      FORMATO: 'Confira: são 6 dígitos, só números.',
+      INEXISTENTE: 'Esse código não vale mais. Peça um novo.',
+      EXPIRADO: 'Esse código passou dos 10 minutos. Peça um novo.',
+      ESGOTADO: 'Muitas tentativas. Peça um código novo.',
+      NAO_CONFERE: 'Esse código não confere. Confira os dígitos e tente de novo.',
+    },
   },
 
   publico: {

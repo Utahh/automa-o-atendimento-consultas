@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import {
   Button,
@@ -36,11 +37,14 @@ export function SheetNovoAgendamento({
   clientesRecentes,
   servicosMaisUsados,
   horariosLivres,
+  diaDosHorarios = '',
 }: {
   readonly clientesRecentes: readonly Opcao[];
   readonly servicosMaisUsados: readonly Opcao[];
   readonly horariosLivres: readonly Slot[];
+  readonly diaDosHorarios?: string;
 }) {
+  const router = useRouter();
   const { fechar } = useOverlay();
   const { mostrar } = useToast();
   const [enviando, iniciar] = useTransition();
@@ -51,15 +55,16 @@ export function SheetNovoAgendamento({
   const [inicioISO, setInicioISO] = useState<string | null>(null);
   const [erroDoCampo, setErroDoCampo] = useState<string | null>(null);
 
-  const pronto =
-    (clienteId !== null || nomeNovo.trim() !== '') && servicoId !== null && inicioISO !== null;
+  const temQuem = clienteId !== null || nomeNovo.trim().length >= 2;
+  const pronto = temQuem && servicoId !== null && inicioISO !== null;
 
   function marcar() {
-    if (!pronto || clienteId === null || servicoId === null || inicioISO === null) return;
+    if (!pronto || servicoId === null || inicioISO === null) return;
 
     iniciar(async () => {
       const r = await criarAgendamentoAction({
         clienteId,
+        clienteNovoNome: clienteId === null ? nomeNovo.trim() : null,
         servicoId,
         recursoId: null,
         inicio: inicioISO,
@@ -68,7 +73,14 @@ export function SheetNovoAgendamento({
       if (r.ok) {
         // Desfazer em vez de diálogo: confirmação por toast, nunca "tem certeza?".
         mostrar(textos.acoes.marcar + ' · ' + textos.status.pendente);
+        setClienteId(null);
+        setNomeNovo('');
+        setInicioISO(null);
+        setErroDoCampo(null);
         fechar(ID_NOVO_AGENDAMENTO);
+        // A agenda atrás da folha é Server Component: o revalidatePath da
+        // action já invalidou o cache, o refresh busca a versão nova.
+        router.refresh();
         return;
       }
 
@@ -133,6 +145,9 @@ export function SheetNovoAgendamento({
         <Field
           rotulo={textos.agenda.quando}
           para="horario"
+          {...(diaDosHorarios !== ''
+            ? { dica: textos.agenda.proximoDiaComVaga + diaDosHorarios }
+            : {})}
           {...(erroDoCampo !== null ? { erro: erroDoCampo } : {})}
         >
           {horariosLivres.length === 0 ? (
@@ -167,10 +182,12 @@ export function BotaoNovoAgendamento({
   clientesRecentes = [],
   servicosMaisUsados = [],
   horariosLivres = [],
+  diaDosHorarios = '',
 }: {
   readonly clientesRecentes?: readonly Opcao[];
   readonly servicosMaisUsados?: readonly Opcao[];
   readonly horariosLivres?: readonly Slot[];
+  readonly diaDosHorarios?: string;
 }) {
   const { abrir } = useOverlay();
 
@@ -183,6 +200,7 @@ export function BotaoNovoAgendamento({
         clientesRecentes={clientesRecentes}
         servicosMaisUsados={servicosMaisUsados}
         horariosLivres={horariosLivres}
+        diaDosHorarios={diaDosHorarios}
       />
     </>
   );

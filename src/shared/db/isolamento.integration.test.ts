@@ -112,7 +112,7 @@ describe.skipIf(URL_DO_BANCO === undefined)('isolamento entre clientes', () => {
     const { rows } = await cliente.query<{ tablename: string }>(
       `select tablename from pg_tables
        where schemaname = 'public'
-         and tablename not in ('__drizzle_migrations', 'webhook_recebido')
+         and tablename not in ('__drizzle_migrations', 'webhook_recebido', 'usuario', 'codigo_acesso')
          and not rowsecurity`,
     );
     await cliente.query('set role kairo_app');

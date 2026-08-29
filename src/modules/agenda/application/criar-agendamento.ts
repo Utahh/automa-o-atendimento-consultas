@@ -39,11 +39,15 @@ export async function criarAgendamento(
   inicioDoDia.setUTCHours(0, 0, 0, 0);
   const fimDaJanela = new Date(inicioDoDia.getTime() + 36 * 60 * 60 * 1000);
 
-  const [servico, faixas, ocupados] = await Promise.all([
-    agendamentoRepo.servico(tx, input.servicoId),
-    agendamentoRepo.jornada(tx, input.recursoId),
-    agendamentoRepo.ocupados(tx, inicioDoDia, fimDaJanela),
-  ]);
+  /*
+   * Sequencial de proposito: uma transacao e UMA conexao, e o `pg` nao aceita
+   * duas consultas ao mesmo tempo no mesmo cliente — Promise.all aqui vira
+   * aviso de depreciacao hoje e erro amanha. O paralelismo do exemplo da
+   * arquitetura so vale fora de transacao.
+   */
+  const servico = await agendamentoRepo.servico(tx, input.servicoId);
+  const faixas = await agendamentoRepo.jornada(tx, input.recursoId);
+  const ocupados = await agendamentoRepo.ocupados(tx, inicioDoDia, fimDaJanela);
 
   if (servico === null) return erro({ codigo: 'DADOS_INVALIDOS', campos: ['servicoId'] });
   if (!servico.ativo) return erro({ codigo: 'SERVICO_INATIVO' });
@@ -83,10 +87,16 @@ export async function criarAgendamento(
   }
 
   // 3. Persiste — a constraint de exclusao do banco e a ultima garantia.
+  //    O cliente novo nasce na MESMA transacao: se o horario nao entrar, ele
+  //    tambem nao fica para tras.
+  const clienteId =
+    input.clienteId ??
+    (await agendamentoRepo.criarCliente(tx, ctx.tenantId, input.clienteNovoNome ?? ''));
+
   const fim = new Date(input.inicio.getTime() + servico.duracaoMin * 60_000);
   const ag = await agendamentoRepo.inserir(tx, {
     tenantId: ctx.tenantId,
-    clienteId: input.clienteId,
+    clienteId,
     servicoId: input.servicoId,
     recursoId: input.recursoId,
     inicio: input.inicio,
@@ -107,7 +117,7 @@ export async function criarAgendamento(
     payload: {
       origem: ctx.origem,
       criadoPor: ctx.ator.tipo,
-      clienteId: input.clienteId,
+      clienteId,
       servicoId: input.servicoId,
       inicio: input.inicio.toISOString(),
       fim: fim.toISOString(),

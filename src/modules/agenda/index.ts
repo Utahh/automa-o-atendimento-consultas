@@ -6,6 +6,9 @@
  * exportacao explicita, ou o limite entre os dois modulos esta errado.
  */
 export { criarAgendamentoAction } from './actions';
+export { consultarAgendaDoDia } from './consultas';
+export type { AgendaDoDia } from './consultas';
+export type { OpcoesDeAgendamento } from './application/opcoes-de-agendamento';
 
 export {
   criarAgendamentoSchema,

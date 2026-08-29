@@ -9,13 +9,25 @@ import { STATUS } from './domain/transicoes';
  * producao.
  */
 
-export const criarAgendamentoSchema = z.object({
-  clienteId: z.string().uuid(),
-  servicoId: z.string().uuid(),
-  recursoId: z.string().uuid().nullable().default(null),
-  inicio: z.coerce.date(),
-  observacao: z.string().max(500).optional(),
-});
+/**
+ * Quem: ou um cliente que ja existe, ou um nome digitado agora.
+ *
+ * O telefone NAO entra aqui: ele so e pedido se o cliente for novo, e
+ * **depois** de marcar. Pedir antes custa a marcacao.
+ */
+export const criarAgendamentoSchema = z
+  .object({
+    clienteId: z.string().uuid().nullable().default(null),
+    clienteNovoNome: z.string().trim().min(2).max(120).nullable().default(null),
+    servicoId: z.string().uuid(),
+    recursoId: z.string().uuid().nullable().default(null),
+    inicio: z.coerce.date(),
+    observacao: z.string().max(500).optional(),
+  })
+  .refine((v) => v.clienteId !== null || v.clienteNovoNome !== null, {
+    message: 'Informe um cliente existente ou o nome de um novo.',
+    path: ['clienteId'],
+  });
 export type CriarAgendamento = z.infer<typeof criarAgendamentoSchema>;
 
 export const remarcarSchema = z.object({

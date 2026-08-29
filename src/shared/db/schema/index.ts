@@ -53,6 +53,36 @@ export const tenant = pgTable('tenant', {
   criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Quem entra. Um usuário pode ser membro de mais de um tenant. */
+export const usuario = pgTable('usuario', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  nome: text('nome'),
+  criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Login por código de 6 dígitos. Sem senha para lembrar, sem senha para
+ * vazar — e sem tenant, porque isto acontece ANTES de existir sessão.
+ *
+ * Guarda o hash, nunca o código: quem lê o banco não entra na conta de
+ * ninguém.
+ */
+export const codigoAcesso = pgTable(
+  'codigo_acesso',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: text('email').notNull(),
+    codigoHash: text('codigo_hash').notNull(),
+    expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
+    usadoEm: timestamp('usado_em', { withTimezone: true }),
+    /** Trava depois de 5 tentativas: 6 dígitos são poucos contra força bruta. */
+    tentativas: integer('tentativas').notNull().default(0),
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('codigo_acesso_email_idx').on(t.email, t.criadoEm)],
+);
+
 /**
  * ⚠️ A política de RLS desta tabela NÃO pode usar uma função que lê `membro`:
  * é recursão infinita, e ela só aparece em produção — em desenvolvimento se
@@ -65,7 +95,9 @@ export const membro = pgTable(
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenant.id, { onDelete: 'cascade' }),
-    usuarioId: uuid('usuario_id').notNull(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'cascade' }),
     papel: papelMembro('papel').notNull().default('dono'),
     criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
   },

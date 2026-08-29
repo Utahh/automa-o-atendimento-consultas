@@ -24,7 +24,16 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // A area logada exige sessao: o preparo assina um cookie valido uma vez,
+    // em vez de passar pela tela de entrada em cada um dos testes.
+    { name: 'preparo', testMatch: /sessao\.setup\.ts/ },
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], storageState: 'e2e/.sessao.json' },
+      dependencies: ['preparo'],
+    },
+  ],
   // Com BASE_URL apontando para um ambiente já publicado, o Playwright não
   // sobe servidor nenhum: testa o que está no ar.
   ...(process.env.BASE_URL === undefined ? { webServer: servidorLocal } : {}),

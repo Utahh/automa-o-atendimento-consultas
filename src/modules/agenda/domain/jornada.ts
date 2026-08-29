@@ -61,3 +61,13 @@ export function formatarHora(instante: Date, fuso: string): string {
     minute: '2-digit',
   }).format(instante);
 }
+
+/** "quinta, 3 de setembro" — o dia por extenso, formatado no servidor. */
+export function formatarDia(instante: Date, fuso: string): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: fuso,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(instante);
+}

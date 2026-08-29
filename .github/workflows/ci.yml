@@ -108,7 +108,7 @@ jobs:
             select string_agg(tablename, ', ')
             from pg_tables
             where schemaname = 'public'
-              and tablename not in ('__drizzle_migrations', 'webhook_recebido')
+              and tablename not in ('__drizzle_migrations', 'webhook_recebido', 'usuario', 'codigo_acesso')
               and not rowsecurity")
           if [ -n "$FALTANDO" ]; then
             echo "::error::Tabela sem RLS: $FALTANDO"
@@ -122,9 +122,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [qualidade]
+    # A area logada le do banco: sem Postgres, a suite mediria a tela de
+    # entrada e ficaria verde pelo motivo errado.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kairo
+          POSTGRES_PASSWORD: kairo
+          POSTGRES_DB: kairo
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kairo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://kairo:kairo@localhost:5432/kairo
       APP_URL: http://127.0.0.1:3000
+      SESSAO_SECRET: apenas-para-o-ci-nao-vale-em-lugar-nenhum-ok
+      TZ: America/Sao_Paulo
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -132,6 +149,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+
+      - name: Preparar o banco de exemplo
+        run: |
+          npm run db:generate
+          npm run db:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f drizzle/rls.sql
+          npm run db:seed
 
       - name: Cache do Playwright
         uses: actions/cache@v6

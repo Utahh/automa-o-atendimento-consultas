@@ -115,6 +115,30 @@ revoke all on function horarios_ocupados_publicos(text, date) from public;
 grant execute on function horarios_ocupados_publicos(text, date) to public;
 
 -- ---------------------------------------------------------------------------
+-- Login: o unico caminho para descobrir o tenant de um usuario.
+--
+-- Acontece ANTES de existir sessao, entao nao ha `app.tenant_id` para a
+-- politica de `membro` comparar. A funcao roda com escopo minimo e exige o
+-- id do usuario, que so aparece depois do codigo conferido — nao serve para
+-- enumerar nada.
+-- ---------------------------------------------------------------------------
+create or replace function tenants_do_usuario(p_usuario_id uuid)
+returns table (tenant_id uuid, fuso text, nome text)
+language sql
+security definer
+set search_path = public
+as $$
+  select m.tenant_id, t.fuso, t.nome
+  from membro m
+  join tenant t on t.id = m.tenant_id
+  where m.usuario_id = p_usuario_id
+  order by m.criado_em
+$$;
+
+revoke all on function tenants_do_usuario(uuid) from public;
+grant execute on function tenants_do_usuario(uuid) to kairo_app;
+
+-- ---------------------------------------------------------------------------
 -- A constraint do banco e a ULTIMA garantia: nenhum agendamento ativo se
 -- sobrepoe no mesmo recurso. Vale para quem marca a dedo e para o agente —
 -- e o que faz o agente ser seguro sem precisar ser esperto.

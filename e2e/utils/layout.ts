@@ -45,6 +45,36 @@ export function colisoesDeTexto(): Colisao[] {
     return true;
   };
 
+  /**
+   * O retangulo REALMENTE visivel de um texto.
+   *
+   * O Range mede a extensao do texto, nao a caixa: com `text-overflow:
+   * ellipsis` ele continua alem do corte, e o par "nome truncado x etiqueta
+   * ao lado" apareceria como colisao que ninguem ve. Cortar pelos ancestrais
+   * que recortam resolve — e mantem a deteccao de quem vaza de verdade, com
+   * overflow visivel.
+   */
+  const recortar = (r: DOMRect, el: Element): DOMRect | null => {
+    let cima: Element | null = el;
+    let { left, top, right, bottom } = r;
+
+    while (cima !== null) {
+      const s = getComputedStyle(cima);
+      const recorta = s.overflowX !== 'visible' || s.overflowY !== 'visible';
+      if (recorta) {
+        const c = cima.getBoundingClientRect();
+        left = Math.max(left, c.left);
+        top = Math.max(top, c.top);
+        right = Math.min(right, c.right);
+        bottom = Math.min(bottom, c.bottom);
+        if (right <= left || bottom <= top) return null;
+      }
+      cima = cima.parentElement;
+    }
+
+    return new DOMRect(left, top, right - left, bottom - top);
+  };
+
   type Caixa = { el: Element; r: DOMRect; texto: string };
   const caixas: Caixa[] = [];
 
@@ -56,8 +86,10 @@ export function colisoesDeTexto(): Colisao[] {
     if (texto !== '' && pai !== null && visivel(pai)) {
       const alcance = document.createRange();
       alcance.selectNodeContents(no);
-      const r = alcance.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) caixas.push({ el: pai, r, texto });
+      const visivelR = recortar(alcance.getBoundingClientRect(), pai);
+      if (visivelR !== null && visivelR.width > 0 && visivelR.height > 0) {
+        caixas.push({ el: pai, r: visivelR, texto });
+      }
       alcance.detach();
     }
     no = andarilho.nextNode();

@@ -1,12 +1,13 @@
-// Direto do arquivo, pelo mesmo motivo das telas: a casca e um Client
-// Component renderizado por um layout de servidor, e o barril misto entre
-// os dois quebra o manifest no prerender de producao.
+import { redirect } from 'next/navigation';
 import { AppShell } from '@/shared/ui/layout/AppShell';
+import { sessaoAtual } from '@/shared/tenancy/sessao';
 
 /**
- * A area logada inteira mora dentro da casca. Nada de header proprio por tela:
- * quem monta o titulo e o <Page> de cada uma.
+ * A guarda da area logada. Sem sessao, ninguem passa daqui — e nenhuma tela
+ * dentro precisa se preocupar com isso de novo.
  */
-export default function LayoutDoApp({ children }: { children: React.ReactNode }) {
+export default async function LayoutDoApp({ children }: { children: React.ReactNode }) {
+  if ((await sessaoAtual()) === null) redirect('/entrar');
+
   return <AppShell>{children}</AppShell>;
 }
