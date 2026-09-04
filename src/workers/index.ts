@@ -2,6 +2,7 @@ import { fila, pararFila, JOBS } from '@/shared/fila';
 import { env } from '@/shared/config/env';
 import { iniciarHeartbeat } from './heartbeat';
 import { lembrete } from './handlers/lembrete';
+import { canal } from './handlers/canal';
 
 /**
  * O SEGUNDO RUNTIME.
@@ -19,6 +20,14 @@ async function principal(): Promise<void> {
     { batchSize: config.WORKER_CONCORRENCIA },
     async (mensagens) => {
       for (const m of mensagens) await lembrete(m.data);
+    },
+  );
+
+  await boss.work(
+    JOBS.processarWebhook.nome,
+    { batchSize: config.WORKER_CONCORRENCIA },
+    async (mensagens) => {
+      for (const m of mensagens) await canal(m.data);
     },
   );
 

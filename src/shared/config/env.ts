@@ -14,6 +14,16 @@ const esquema = z.object({
   CANAL_VERIFY_TOKEN: z.string().optional(),
   CANAL_APP_SECRET: z.string().optional(),
   CANAL_TOKEN: z.string().optional(),
+  CANAL_PHONE_NUMBER_ID: z.string().optional(),
+  /**
+   * O eco e comportamento descartavel: ele prova que o circuito fecha e some
+   * quando o roteador chegar. Desligado por padrao — sem isso, um cliente real
+   * receberia "eco" no dia em que a VPS subisse com o token configurado.
+   */
+  CANAL_ECO_ATIVO: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => v === 'true'),
   IA_API_KEY: z.string().optional(),
   IA_MODELO_PADRAO: z.string().default('claude-sonnet-5'),
   IA_MODELO_FALLBACK: z.string().default('claude-haiku-4-5-20251001'),
